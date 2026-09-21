@@ -79,9 +79,32 @@ All AI functionality is powered by the Google Gemini API (`@google/genai` SDK), 
 - **Location**: `src/app/api/ai/suggest-location/route.ts`
 - **Function**: Suggests GPS coordinates, country, and landmark names based on image metadata or search text.
 
+#### F. Multilingual Content Translation (`POST /api/ai/translate`)
+- **Location**: `src/app/api/ai/translate/route.ts`
+- **Function**: `translateTripContent({ title, description, targetLang })` in `src/lib/gemini.ts`
+- **Capabilities**:
+  - Translates travel titles and descriptions between Romanian (base) and target languages: English (`en`), German (`de`), Spanish (`es`), and French (`fr`).
+  - Supports 1-click batch translation of all 4 languages via `{ all: true }` or targeted translation per tab.
+  - Generates culturally natural travel titles and poetic descriptions with automated fallback dictionaries when Gemini API is busy.
+  - Access: Restricted to `ADMIN` role.
+
 ---
 
-## 3. Role-Based Access Control (RBAC) & Visibility Matrix
+## 3. Multilingual System Architecture (5 Languages)
+
+Wayward Atlas is 100% localized across 5 languages without mixed-language artifacts:
+- **Languages**: 🇷🇴 Română (`ro` - default/base), 🇬🇧 English (`en`), 🇩🇪 Deutsch (`de`), 🇪🇸 Español (`es`), 🇫🇷 Français (`fr`).
+- **High-Resolution Vector Flags**: Hand-crafted SVG flag components (`FlagIcon.tsx`) eliminating Windows Unicode emoji limitations.
+- **Dynamic Content Localization**: 
+  - Every trip in SQLite stores `translations` as JSON: `{ [lang]: { title, description } }`.
+  - Helper `getLocalizedTrip(trip, language)` in `src/lib/i18n/localize.ts` extracts the exact title and description according to the user's active language, falling back to Romanian if not yet translated.
+  - Dates use `formatLocalizedDate(date, language)` rendering natural month names and formats in every language.
+- **Admin Studio Multilingual Manager**:
+  - Both `UploadModal.tsx` and `EditTripModal.tsx` feature dedicated tabbed translation studios allowing admins to input Romanian text, translate to all or individual languages via AI, and manually edit or refine any translation prior to saving.
+
+---
+
+## 4. Role-Based Access Control (RBAC) & Visibility Matrix
 
 Wayward Atlas enforces a strict 5-tier permission hierarchy:
 
@@ -100,7 +123,7 @@ Wayward Atlas enforces a strict 5-tier permission hierarchy:
 
 ---
 
-## 4. Sibiu Home Base Odometry Engine
+## 5. Sibiu Home Base Odometry Engine
 
 All travel metrics originate from the user's permanent residence:
 - **Home Base**: Sibiu, Romania
@@ -118,7 +141,7 @@ All travel metrics originate from the user's permanent residence:
 
 ---
 
-## 5. Virtual Passport & Scratch Map
+## 6. Virtual Passport & Scratch Map
 
 - **Module**: `src/lib/passport.ts`
 - **Components**: `src/components/VirtualPassportModal.tsx`, `src/components/Globe3D.tsx`
@@ -129,23 +152,6 @@ All travel metrics originate from the user's permanent residence:
 - **Visa & Entry Stamps**: Renders realistic rotating vintage rubber stamps with country flags, entry dates, and traveler ranks.
 - **Exploration Percentages**: Calculates the percentage of the 195 UN sovereign nations explored.
 - **3D Globe Highlighting**: Visited countries are highlighted with glowing olive/gold translucent polygons on Terra 3D, toggleable with a floating button.
-
----
-
-## 6. Internationalization (i18n) Architecture
-
-- **Supported Languages**:
-  1. Română 🇷🇴 (`ro`) — Default
-  2. English 🇬🇧 (`en`)
-  3. Deutsch 🇩🇪 (`de`)
-  4. Español 🇪🇸 (`es`)
-  5. Français 🇫🇷 (`fr`)
-- **Modules**:
-  - `src/lib/i18n/types.ts`: Type definitions and language list.
-  - `src/lib/i18n/translations.ts`: Key-value bundle dictionary organized by components (`common`, `nav`, `showcase`, `passport`, `wrapped`, `planner`, `drawer`, `share`, `auth`).
-  - `src/lib/i18n/context.tsx`: `LanguageProvider` context and `useTranslation()` hook.
-  - `src/components/LanguageSelector.tsx`: Accessible dropdown with country flags and native language names in both desktop Navbar and mobile drawer.
-- **Persistence**: Automatically saved to `localStorage` key `wayward_lang` and updates `document.documentElement.lang`.
 
 ---
 

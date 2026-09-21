@@ -40,6 +40,7 @@ import {
   Check,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
+import { getLocalizedTrip, formatLocalizedDate } from "@/lib/i18n/localize";
 
 interface CssNectarShowcaseProps {
   trips: TripData[];
@@ -60,7 +61,7 @@ export function CssNectarShowcase({
   onOpenPassport,
   onOpenWrapped,
 }: CssNectarShowcaseProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
   const [likes, setLikes] = useState<Record<string, number>>({});
   const [randomTripIndex, setRandomTripIndex] = useState(0);
@@ -238,15 +239,15 @@ export function CssNectarShowcase({
     }));
   };
 
-  // Active random trip
-  const randomTrip = activeSpotlightPool[randomTripIndex % Math.max(1, activeSpotlightPool.length)];
+  const randomTrip = activeSpotlightPool[randomTripIndex] || activeSpotlightPool[0];
   const randomPhoto = randomTrip ? getRoleSafePhoto(randomTrip) : undefined;
+  const localizedRandomTrip = randomTrip ? getLocalizedTrip(randomTrip, language) : { title: "", description: "" };
   const randomCoverUrl = randomPhoto?.url || defaultPlaceholderImg;
-  const randomYear = randomTrip?.year || (randomTrip ? new Date(randomTrip.startDate).getFullYear() : 2024);
-  const randomTripDistance = randomTrip ? calculateTripDistance(randomTrip, HOME_BASE_SIBIU) : null;
+  const randomTripDistance = randomTrip ? calculateTripDistance(randomTrip) : 0;
+  const randomYear = randomTrip && randomTrip.startDate ? new Date(randomTrip.startDate).getFullYear() : "";
 
   return (
-    <div className="w-full min-h-screen pt-24 pb-20 px-4 sm:px-8 max-w-7xl mx-auto overflow-y-auto animate-fade-in">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Intro Bar: Pure Typography, CSS Nectar Style */}
       <div className="mb-10 text-center max-w-2xl mx-auto">
         <span className="px-3.5 py-1 rounded-full text-xs font-bold tracking-wider text-olive-800 dark:text-olive-300 bg-olive-500/15 border border-olive-500/30 uppercase mb-3 inline-block">
@@ -260,54 +261,54 @@ export function CssNectarShowcase({
         </p>
       </div>
 
-      {/* Feature Highlights: Virtual Passport & Atlas Wrapped */}
+      {/* Feature Highlights: Virtual Passport & Atlas Wrapped - Signature Frosted Glass */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
         {/* Card 1: Virtual Passport */}
         <div
           onClick={onOpenPassport}
-          className="p-5 rounded-3xl bg-gradient-to-br from-amber-950/20 via-slate-900/60 to-slate-950/80 border border-amber-500/30 hover:border-amber-400/60 transition-all shadow-sm hover:shadow-lg hover:scale-[1.01] cursor-pointer group flex items-center justify-between gap-4"
+          className="glass-panel p-5 rounded-3xl border border-olive-500/30 hover:border-amber-500/60 transition-all shadow-sm hover:shadow-lg hover:scale-[1.01] cursor-pointer group flex items-center justify-between gap-4 bg-gradient-to-br from-amber-500/10 via-transparent to-olive-500/10"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform shrink-0">
               <Award className="w-6 h-6" aria-hidden="true" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block">
                 {t("showcase.passportCardTitle")}
               </span>
               <h3 className="text-base font-black text-slate-900 dark:text-white">
                 {t("passport.title")}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                 {t("showcase.passportCardDesc")}
               </p>
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-amber-400 shrink-0 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+          <ArrowRight className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
         </div>
 
         {/* Card 2: Atlas Wrapped */}
         <div
           onClick={onOpenWrapped}
-          className="p-5 rounded-3xl bg-gradient-to-br from-olive-950/30 via-slate-900/60 to-slate-950/80 border border-olive-500/30 hover:border-olive-400/60 transition-all shadow-sm hover:shadow-lg hover:scale-[1.01] cursor-pointer group flex items-center justify-between gap-4"
+          className="glass-panel p-5 rounded-3xl border border-olive-500/30 hover:border-olive-400/60 transition-all shadow-sm hover:shadow-lg hover:scale-[1.01] cursor-pointer group flex items-center justify-between gap-4 bg-gradient-to-br from-olive-500/15 via-transparent to-olive-600/10"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-olive-500/15 border border-olive-500/30 flex items-center justify-center text-olive-400 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-olive-500/15 border border-olive-500/30 flex items-center justify-center text-olive-700 dark:text-olive-400 group-hover:scale-110 transition-transform shrink-0">
               <Gift className="w-6 h-6" aria-hidden="true" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-olive-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-olive-800 dark:text-olive-300 block">
                 {t("showcase.wrappedCardTitle")}
               </span>
               <h3 className="text-base font-black text-slate-900 dark:text-white">
                 {t("wrapped.title")}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                 {t("showcase.wrappedCardDesc")}
               </p>
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-olive-400 shrink-0 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+          <ArrowRight className="w-5 h-5 text-olive-700 dark:text-olive-400 shrink-0 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
         </div>
       </div>
 
@@ -320,8 +321,8 @@ export function CssNectarShowcase({
             <Dice5 className="w-5 h-5 text-olive-600 dark:text-olive-400" />
             <h3 className="nectar-section-header text-sm sm:text-base text-olive-800 dark:text-olive-300">
               {spotlightFilter === "partner"
-                ? "AMINTIRI CU NOI (ÎN DOI)"
-                : "AMINTIRE LA ÎNTÂMPLARE (RANDOM MEMORY)"}
+                ? t("showcase.spotlightPartnerTitle")
+                : t("showcase.spotlightTitle")}
             </h3>
           </div>
 
@@ -346,7 +347,7 @@ export function CssNectarShowcase({
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  Toate Jurnalele
+                  {t("showcase.filterAllJournals")}
                 </button>
                 <button
                   type="button"
@@ -362,25 +363,25 @@ export function CssNectarShowcase({
                   }`}
                 >
                   <Heart className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
-                  <span>Amintiri cu Noi</span>
+                  <span>{t("showcase.filterPartnerMoments")}</span>
                 </button>
               </div>
             )}
 
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 hidden lg:inline">
-              Rol activ: {currentUser?.role || "PUBLIC (Vizitator)"}
+              {t("showcase.activeRole")} {currentUser?.role || t("showcase.rolePublic")}
             </span>
 
             <button
               type="button"
               onClick={rollRandomTrip}
               disabled={isRolling || activeSpotlightPool.length <= 1}
-              aria-label={spotlightFilter === "partner" ? "Alege un alt moment cu noi la întâmplare" : "Alege o altă călătorie la întâmplare"}
-              title="Alege o altă călătorie aleatorie din cele permise rolului tău"
+              aria-label={spotlightFilter === "partner" ? t("showcase.rollPartner") : t("showcase.rollRandom")}
+              title={spotlightFilter === "partner" ? t("showcase.rollPartner") : t("showcase.rollRandom")}
               className="px-3 py-1.5 rounded-xl bg-olive-500/15 hover:bg-olive-500/30 text-olive-800 dark:text-olive-300 text-xs font-bold flex items-center gap-1.5 transition-all hover:scale-105 border border-olive-500/30"
             >
               <Shuffle className={`w-3.5 h-3.5 ${isRolling ? "animate-spin" : ""}`} aria-hidden="true" />
-              <span>{spotlightFilter === "partner" ? "Alt moment cu noi" : "Rotește altă amintire"}</span>
+              <span>{spotlightFilter === "partner" ? t("showcase.rollPartner") : t("showcase.rollRandom")}</span>
             </button>
           </div>
         </div>
@@ -394,7 +395,7 @@ export function CssNectarShowcase({
           <div className="p-8 text-center rounded-3xl glass-panel border-olive-500/20">
             <Camera className="w-10 h-10 text-olive-600 dark:text-olive-400 mx-auto mb-3" aria-hidden="true" />
             <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              Nu există încă expediții finalizate pentru rolul tău.
+              {t("showcase.noCompletedTrips")}
             </p>
           </div>
         ) : (
@@ -403,7 +404,7 @@ export function CssNectarShowcase({
               <div
                 role="button"
                 tabIndex={0}
-                aria-label={`Deschide jurnalul complet de călătorie: ${randomTrip.title}`}
+                aria-label={`Deschide jurnalul complet de călătorie: ${localizedRandomTrip.title}`}
                 onClick={() => onSelectTrip(randomTrip, randomPhoto)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -417,7 +418,7 @@ export function CssNectarShowcase({
                 <div className="lg:col-span-7 relative h-72 sm:h-96 lg:h-[430px] overflow-hidden bg-slate-950">
                   <img
                     src={randomCoverUrl}
-                    alt={`Coperta călătoriei: ${randomTrip.title}`}
+                    alt={`Coperta călătoriei: ${localizedRandomTrip.title}`}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-black/60" />
@@ -426,18 +427,18 @@ export function CssNectarShowcase({
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
                     <span className="inline-flex items-center gap-1 text-xs font-black px-3 py-1 rounded-full bg-olive-700 text-white shadow-lg uppercase tracking-wider">
                       <Sparkles className="w-3 h-3 text-olive-200" aria-hidden="true" />
-                      {spotlightFilter === "partner" ? "Moment în Doi" : "Selecție Aleatorie"}
+                      {spotlightFilter === "partner" ? t("showcase.badgePartnerMoment") : t("showcase.badgeRandomSelection")}
                     </span>
                     {randomTrip.withPartner && (
                       <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-rose-600 text-white shadow-lg">
                         <Heart className="w-3 h-3 fill-white" aria-hidden="true" />
-                        În Doi
+                        {t("showcase.badgeInTwo")}
                       </span>
                     )}
                     {randomTrip.isCountryShowcase && (
                       <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-amber-500 text-slate-950 shadow-lg">
                         <Star className="w-3 h-3 fill-slate-950" aria-hidden="true" />
-                        Oficial Țară
+                        {t("showcase.badgeCountryOfficial")}
                       </span>
                     )}
                   </div>
@@ -446,7 +447,7 @@ export function CssNectarShowcase({
                   {randomPhoto && randomPhoto.latitude && randomPhoto.longitude && (
                     <button
                       type="button"
-                      aria-label={`Localizează călătoria ${randomTrip.title} pe hartă sau glob 3D`}
+                      aria-label={`Localizează călătoria ${localizedRandomTrip.title} pe hartă sau glob 3D`}
                       title="Localizează pe hartă / glob 3D"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -467,29 +468,25 @@ export function CssNectarShowcase({
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" />
                         {randomTrip.isMaskedDate
-                          ? `Anul ${randomYear}`
-                          : new Date(randomTrip.startDate).toLocaleDateString("ro-RO", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            })}
+                          ? t("showcase.tripYearMasked").replace("{year}", String(randomYear))
+                          : formatLocalizedDate(randomTrip.startDate, language)}
                       </span>
                       <span className="flex items-center gap-1">
                         <Camera className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" />
-                        {randomTrip.photos.length} amintiri
+                        {randomTrip.photos.length} {t("showcase.memories")}
                       </span>
                     </div>
 
                     <div>
                       <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white group-hover:text-olive-700 dark:group-hover:text-olive-400 transition-colors">
-                        {randomTrip.title}
+                        {localizedRandomTrip.title}
                       </h4>
                       <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1 font-semibold">
                         <MapPin className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400 shrink-0" />
                         <span>
                           {randomPhoto?.placeName
                             ? `${randomPhoto.placeName} (${randomPhoto.city || randomPhoto.country || ""})`
-                            : randomPhoto?.city || randomPhoto?.country || `Destinație explorată în ${randomYear}`}
+                            : randomPhoto?.city || randomPhoto?.country || `${t("showcase.tripYearMasked").replace("{year}", String(randomYear))}`}
                         </span>
                       </p>
                     </div>
@@ -499,20 +496,22 @@ export function CssNectarShowcase({
                       <div className="p-3 rounded-2xl bg-olive-500/10 border border-olive-500/20 flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5 font-bold text-olive-800 dark:text-olive-300">
                           <Plane className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" />
-                          <span>Distanță călătorie din Sibiu:</span>
+                          <span>{t("showcase.tripDistanceFromSibiu")}</span>
                         </span>
                         <span className="font-black text-slate-900 dark:text-white">
                           {randomTripDistance.totalKm.toLocaleString()} km
                           <span className="text-[10px] font-normal text-slate-500 ml-1 hidden sm:inline">
-                            ({randomTripDistance.transitKm.toLocaleString()} km zbor)
+                            {t("showcase.tripFlightTransit").replace("{km}", randomTripDistance.transitKm.toLocaleString())}
                           </span>
                         </span>
                       </div>
                     )}
 
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
-                      {randomTrip.description ||
-                        "O călătorie memorabilă plină de aventuri, peisaje autentice și descoperiri fascinante pe traseu."}
+                      {localizedRandomTrip.description ||
+                        (language === "ro"
+                          ? "O călătorie memorabilă plină de aventuri, peisaje autentice și descoperiri fascinante pe traseu."
+                          : "A memorable journey filled with adventures, authentic landscapes and fascinating discoveries along the route.")}
                     </p>
 
                     {/* Partner Memory Excerpt (Only for Partner or Admin) */}
@@ -521,17 +520,19 @@ export function CssNectarShowcase({
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-[11px] font-bold flex items-center gap-1.5 text-rose-700 dark:text-rose-400">
                             <Heart className="w-3.5 h-3.5 fill-current" />
-                            <span>Amintire din Jurnalul Nostru în Doi:</span>
+                            <span>{t("showcase.partnerJournalExcerpt")}</span>
                           </p>
                           {spotlightFilter === "partner" && (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300">
-                              Noi Doi
+                              {t("showcase.partnerJournalTag")}
                             </span>
                           )}
                         </div>
                         <p className="text-xs italic line-clamp-3">
                           {randomTrip.partnerNotes ||
-                            "O amintire de neprețuit trăită împreună, departe de agitație."}
+                            (language === "ro"
+                              ? "O amintire de neprețuit trăită împreună, departe de agitație."
+                              : "A priceless memory experienced together, far away from everyday bustle.")}
                         </p>
                       </div>
                     )}
@@ -539,12 +540,12 @@ export function CssNectarShowcase({
                     {/* Tags */}
                     {randomPhoto?.tags && randomPhoto.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {randomPhoto.tags.slice(0, 5).map((t, idx) => (
+                        {randomPhoto.tags.slice(0, 5).map((tag: string, idx: number) => (
                           <span
                             key={idx}
                             className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-olive-500/15 text-olive-800 dark:text-olive-300 border border-olive-500/25"
                           >
-                            #{t}
+                            #{tag}
                           </span>
                         ))}
                       </div>
@@ -553,7 +554,7 @@ export function CssNectarShowcase({
 
                   <div className="pt-6 border-t border-olive-500/20 flex items-center justify-between">
                     <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-olive-700 dark:text-olive-400 group-hover:translate-x-1.5 transition-transform">
-                      <span>Deschide Jurnalul Complet</span>
+                      <span>{t("showcase.openFullJournal")}</span>
                       <ArrowRight className="w-4 h-4" />
                     </span>
 
@@ -574,7 +575,7 @@ export function CssNectarShowcase({
 
                       <button
                         type="button"
-                        aria-label={`Apreciază călătoria ${randomTrip.title}. Total aprecieri: ${likes[randomTrip.id] || randomTrip.photos.length * 9 + 31}`}
+                        aria-label={`Apreciază călătoria ${localizedRandomTrip.title}. Total aprecieri: ${likes[randomTrip.id] || randomTrip.photos.length * 9 + 31}`}
                         title="Apreciază călătoria"
                         onClick={(e) => handleLike(randomTrip.id, e)}
                         className="flex items-center gap-1 text-slate-500 hover:text-rose-500 transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-500/10 focus:ring-2 focus:ring-rose-400"
@@ -600,13 +601,14 @@ export function CssNectarShowcase({
                     const photo = getRoleSafePhoto(trip);
                     const cover = photo?.url || defaultPlaceholderImg;
                     const year = trip.year || new Date(trip.startDate).getFullYear();
+                    const localizedStripTrip = getLocalizedTrip(trip, language);
 
                     return (
                       <div
                         key={trip.id}
                         role="button"
                         tabIndex={0}
-                        aria-label={`Deschide călătoria: ${trip.title} (${photo?.city || photo?.country || `Anul ${year}`})`}
+                        aria-label={`Deschide călătoria: ${localizedStripTrip.title} (${photo?.city || photo?.country || `Anul ${year}`})`}
                         onClick={() => onSelectTrip(trip, photo)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
@@ -618,18 +620,18 @@ export function CssNectarShowcase({
                       >
                         <img
                           src={cover}
-                          alt={trip.title}
+                          alt={localizedStripTrip.title}
                           className="w-16 h-16 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform"
                         />
                         <div className="overflow-hidden">
                           <h5 className="text-xs font-black text-slate-900 dark:text-white truncate group-hover:text-olive-700 dark:group-hover:text-olive-400">
-                            {trip.title}
+                            {localizedStripTrip.title}
                           </h5>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                            {photo?.city || photo?.country || `Anul ${year}`}
+                            {photo?.city || photo?.country || `${t("showcase.tripYearMasked").replace("{year}", String(year))}`}
                           </p>
                           <span className="text-[10px] text-olive-700 dark:text-olive-400 font-bold mt-1 inline-block">
-                            {trip.photos.length} amintiri • Vezi jurnal →
+                            {trip.photos.length} {t("showcase.memories")} • {t("showcase.seeJournalArrow")}
                           </span>
                         </div>
                       </div>
@@ -650,11 +652,11 @@ export function CssNectarShowcase({
           <div className="flex items-center gap-2.5">
             <Rocket className="w-5 h-5 text-olive-600 dark:text-olive-400" />
             <h3 className="nectar-section-header text-sm sm:text-base text-olive-800 dark:text-olive-300">
-              ODOMETRU COSMIC & SCĂRI ASTRONOMICE (DE LA SIBIU LA STELE)
+              {t("showcase.cosmicSectionTitle")}
             </h3>
           </div>
           <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-            Origine: {HOME_BASE_SIBIU.name}
+            {t("showcase.originCity")}
           </span>
         </div>
 
@@ -666,14 +668,14 @@ export function CssNectarShowcase({
               <div>
                 <span className="px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-olive-500/20 text-olive-800 dark:text-olive-200 border border-olive-500/30 inline-flex items-center gap-1.5 mb-3">
                   <Compass className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" />
-                  Distanță Geodezică Cumulată
+                  {t("showcase.cumulativeGeodesic")}
                 </span>
                 <h4 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
                   {cosmicMetrics.totalKm.toLocaleString()}{" "}
                   <span className="text-xl sm:text-2xl font-bold text-olive-700 dark:text-olive-400">km</span>
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                  Pornind din Sibiu (45.7983° N, 24.1256° E) • Calcul precis Haversine pe trasee și zboruri dus-întors
+                  {t("showcase.sibiuHaversineDesc")}
                 </p>
               </div>
 
@@ -685,26 +687,26 @@ export function CssNectarShowcase({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-6 mt-6 border-t border-olive-500/20">
               <div>
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">
-                  Ocolul Ecuatorului
+                  {t("showcase.equatorLaps")}
                 </span>
                 <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
-                  {cosmicMetrics.equatorLaps} × <span className="text-xs font-semibold text-slate-500">lumea</span>
+                  {cosmicMetrics.equatorLaps} × <span className="text-xs font-semibold text-slate-500">{t("showcase.equatorLapsUnit")}</span>
                 </p>
               </div>
               <div>
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">
-                  Țări Explorate
+                  {t("showcase.countriesExplored")}
                 </span>
                 <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
-                  {cosmicMetrics.countriesVisited.length} <span className="text-xs font-semibold text-slate-500">state</span>
+                  {cosmicMetrics.countriesVisited.length} <span className="text-xs font-semibold text-slate-500">{t("showcase.countriesExploredUnit")}</span>
                 </p>
               </div>
               <div className="col-span-2 sm:col-span-1">
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">
-                  Viteza Luminii
+                  {t("showcase.lightSpeed")}
                 </span>
                 <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
-                  {cosmicMetrics.lightSeconds} <span className="text-xs font-semibold text-slate-500">sec. lumină</span>
+                  {cosmicMetrics.lightSeconds} <span className="text-xs font-semibold text-slate-500">{t("showcase.lightSpeedUnit")}</span>
                 </p>
               </div>
             </div>
@@ -715,19 +717,19 @@ export function CssNectarShowcase({
             <div>
               <div className="flex items-center gap-2 text-xs font-bold text-olive-800 dark:text-olive-300 uppercase tracking-wider mb-2">
                 <Milestone className="w-4 h-4 text-olive-600 dark:text-olive-400" />
-                <span>Punctul de Plecare</span>
+                <span>{t("showcase.startingPoint")}</span>
               </div>
               <h5 className="text-xl font-black text-slate-900 dark:text-white">
-                Sibiu, Transilvania
+                {t("showcase.startingPointName")}
               </h5>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                Fiecare expediție pornește din inima cetății medievale a Sibiului, traversând continentele spre noi orizonturi.
+                {t("showcase.startingPointDesc")}
               </p>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-olive-500/15 border border-olive-500/30 mt-4">
               <span className="text-[11px] font-bold text-olive-800 dark:text-olive-300 block">
-                Echivalent Apollo 11:
+                {t("showcase.apollo11Equiv")}
               </span>
               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
                 {cosmicMetrics.apollo11Comparison}
@@ -746,65 +748,65 @@ export function CssNectarShowcase({
                 </div>
                 <div>
                   <h5 className="font-black text-base sm:text-xl text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>Distanța Noastră în Doi (Călătorii cu Partenerul)</span>
+                    <span>{t("showcase.partnerSectionTitle")}</span>
                     <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30">
-                      Privat & Special
+                      {t("showcase.partnerSectionBadge")}
                     </span>
                   </h5>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Kilometri geodezici parcurși împreună din Sibiu prin locurile vizitate în doi
+                    {t("showcase.partnerSectionDesc")}
                   </p>
                 </div>
               </div>
 
               <span className="text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-500/15 px-3 py-1.5 rounded-xl border border-rose-500/30 self-start sm:self-auto">
-                {partnerMetrics.sharedPercentageOfTotal}% din toate călătoriile tale
+                {t("showcase.partnerPercentOfTotal").replace("{percent}", String(partnerMetrics.sharedPercentageOfTotal))}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="p-4 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-rose-500/20">
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block">
-                  Kilometri în Doi
+                  {t("showcase.partnerKmTogether")}
                 </span>
                 <p className="text-xl sm:text-2xl font-black text-rose-700 dark:text-rose-400 mt-1">
                   {partnerMetrics.sharedKm.toLocaleString()}{" "}
                   <span className="text-xs font-bold text-slate-500">km</span>
                 </p>
-                <span className="text-[10px] text-slate-500 mt-0.5 block">din Sibiu și retur</span>
+                <span className="text-[10px] text-slate-500 mt-0.5 block">{t("showcase.partnerFromSibiuReturn")}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-rose-500/20">
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block">
-                  Expediții Împreună
+                  {t("showcase.partnerTripsTogether")}
                 </span>
                 <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
                   {partnerMetrics.sharedTripsCount}{" "}
-                  <span className="text-xs font-bold text-slate-500">jurnale</span>
+                  <span className="text-xs font-bold text-slate-500">{t("showcase.partnerTripsUnit")}</span>
                 </p>
                 <span className="text-[10px] text-slate-500 mt-0.5 block">
-                  {partnerMetrics.sharedPhotosCount} fotografii de cuplu
+                  {t("showcase.partnerPhotosTogether").replace("{count}", String(partnerMetrics.sharedPhotosCount))}
                 </span>
               </div>
 
               <div className="p-4 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-rose-500/20">
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block">
-                  Ocolul Pământului
+                  {t("showcase.partnerEarthCircuits")}
                 </span>
                 <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
                   {partnerMetrics.sharedEquatorLaps} ×
                 </p>
-                <span className="text-[10px] text-slate-500 mt-0.5 block">Ecuatorul Terestru</span>
+                <span className="text-[10px] text-slate-500 mt-0.5 block">{t("showcase.partnerEarthEquator")}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-rose-500/20">
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block">
-                  Spre Lună în Doi
+                  {t("showcase.partnerTowardsMoon")}
                 </span>
                 <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
                   {partnerMetrics.sharedMoonPercentage}%
                 </p>
-                <span className="text-[10px] text-slate-500 mt-0.5 block">din drumul spre Lună</span>
+                <span className="text-[10px] text-slate-500 mt-0.5 block">{t("showcase.partnerMoonRoute")}</span>
               </div>
             </div>
           </div>
@@ -820,8 +822,8 @@ export function CssNectarShowcase({
                   <Moon className="w-5 h-5 text-amber-500" />
                 </div>
                 <div>
-                  <h5 className="font-black text-sm text-slate-900 dark:text-white">LUNA (LUNA)</h5>
-                  <p className="text-[11px] text-slate-500">384.400 km</p>
+                  <h5 className="font-black text-sm text-slate-900 dark:text-white">{t("showcase.scaleMoonTitle")}</h5>
+                  <p className="text-[11px] text-slate-500">{t("showcase.scaleMoonKm")}</p>
                 </div>
               </div>
               <span className="text-xs font-black text-olive-700 dark:text-olive-400">
@@ -837,7 +839,7 @@ export function CssNectarShowcase({
               />
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              Ai parcurs <strong className="text-slate-900 dark:text-slate-200">{cosmicMetrics.moonPercentage}%</strong> din drumul până la suprafața selenară.
+              {t("showcase.scaleMoonDesc").replace("{percent}", String(cosmicMetrics.moonPercentage))}
             </p>
           </div>
 
@@ -849,8 +851,8 @@ export function CssNectarShowcase({
                   <Sun className="w-5 h-5" />
                 </div>
                 <div>
-                  <h5 className="font-black text-sm text-slate-900 dark:text-white">SOARELE (1 AU)</h5>
-                  <p className="text-[11px] text-slate-500">149.600.000 km</p>
+                  <h5 className="font-black text-sm text-slate-900 dark:text-white">{t("showcase.scaleSunTitle")}</h5>
+                  <p className="text-[11px] text-slate-500">{t("showcase.scaleSunKm")}</p>
                 </div>
               </div>
               <span className="text-xs font-black text-olive-700 dark:text-olive-400">
@@ -866,7 +868,7 @@ export function CssNectarShowcase({
               />
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              O călătorie spre inima sistemului solar. Nu uita ochelarii de soare și protecția solară!
+              {t("showcase.scaleSunDesc")}
             </p>
           </div>
 
@@ -878,8 +880,8 @@ export function CssNectarShowcase({
                   <Star className="w-5 h-5" />
                 </div>
                 <div>
-                  <h5 className="font-black text-sm text-slate-900 dark:text-white">PROXIMA CENTAURI</h5>
-                  <p className="text-[11px] text-slate-500">40.18 Trilioane km</p>
+                  <h5 className="font-black text-sm text-slate-900 dark:text-white">{t("showcase.scaleProximaTitle")}</h5>
+                  <p className="text-[11px] text-slate-500">{t("showcase.scaleProximaKm")}</p>
                 </div>
               </div>
               <span className="text-xs font-black text-olive-700 dark:text-olive-300">
@@ -895,7 +897,7 @@ export function CssNectarShowcase({
               />
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              Cea mai apropiată stea din afara Sistemului Solar. Următoarea oprire: propulsia warp!
+              {t("showcase.scaleProximaDesc")}
             </p>
           </div>
         </div>
@@ -909,10 +911,10 @@ export function CssNectarShowcase({
               </div>
               <div>
                 <h5 className="font-black text-base sm:text-lg text-slate-900 dark:text-white">
-                  Curiozități Cosmice & Umor de Călătorie (Gemini AI)
+                  {t("showcase.triviaTitle")}
                 </h5>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Generat în timp real de Gemini pe baza destinațiilor tale reale și a plecării din Sibiu
+                  {t("showcase.triviaSub")}
                 </p>
               </div>
             </div>
@@ -924,7 +926,7 @@ export function CssNectarShowcase({
               className="self-start sm:self-auto px-4 py-2 rounded-xl bg-olive-700 hover:bg-olive-800 text-white text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 shadow-sm"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingTrivia ? "animate-spin" : ""}`} />
-              <span>{isGeneratingTrivia ? "Gemini analizează..." : "Generează altă curiozitate"}</span>
+              <span>{isGeneratingTrivia ? t("showcase.triviaAnalyzing") : t("showcase.triviaGenerateAnother")}</span>
             </button>
           </div>
 
@@ -932,14 +934,14 @@ export function CssNectarShowcase({
             <div className="py-8 text-center">
               <Sparkles className="w-8 h-8 text-olive-600 dark:text-olive-400 animate-pulse mx-auto mb-2" />
               <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Gemini calculează traiectoria orbitală și formulează gluma perfectă...
+                {t("showcase.triviaLoadingText")}
               </p>
             </div>
           ) : aiTrivia ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-4 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-olive-500/20">
                 <span className="text-[11px] font-black uppercase text-olive-800 dark:text-olive-300 tracking-wider block mb-1">
-                  🌍 Fapt Inedit Pământean
+                  {t("showcase.triviaEarthFact")}
                 </span>
                 <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                   {aiTrivia.funFact}
@@ -948,7 +950,7 @@ export function CssNectarShowcase({
 
               <div className="p-4 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-olive-500/20">
                 <span className="text-[11px] font-black uppercase text-olive-800 dark:text-olive-300 tracking-wider block mb-1">
-                  🚀 Comparație Spațială
+                  {t("showcase.triviaCosmicComparison")}
                 </span>
                 <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                   {aiTrivia.cosmicComparison}
@@ -957,7 +959,7 @@ export function CssNectarShowcase({
 
               <div className="p-4 rounded-2xl bg-white/50 dark:bg-slate-900/50 border border-olive-500/20">
                 <span className="text-[11px] font-black uppercase text-olive-800 dark:text-olive-300 tracking-wider block mb-1">
-                  🔭 Sfat Astronomic de la Sibiu
+                  {t("showcase.triviaAstronomicalTip")}
                 </span>
                 <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                   {aiTrivia.astronomicalTip}
@@ -969,7 +971,7 @@ export function CssNectarShowcase({
                   <Heart className="w-4 h-4 text-rose-600 dark:text-rose-400 fill-rose-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="text-xs font-bold text-rose-700 dark:text-rose-300 block mb-0.5">
-                      Bancul Călătoriilor în Doi:
+                      {t("showcase.triviaPartnerJoke")}
                     </span>
                     <p className="text-xs italic text-slate-800 dark:text-slate-200">
                       "{aiTrivia.partnerBanter}"
@@ -980,7 +982,7 @@ export function CssNectarShowcase({
             </div>
           ) : (
             <div className="py-6 text-center text-xs text-slate-500">
-              Apasă pe "Generează altă curiozitate" pentru a activa comentatorul cosmic Gemini AI.
+              {t("showcase.triviaEmptyHint")}
             </div>
           )}
         </div>
@@ -993,11 +995,11 @@ export function CssNectarShowcase({
         <div className="flex items-center justify-between mb-6 pb-2 border-b border-olive-500/20">
           <div className="flex items-center gap-3">
             <h3 className="nectar-section-header text-sm sm:text-base text-olive-800 dark:text-olive-300">
-              UPCOMING EXPEDITIONS & TRAVEL ASSIST (PLANURI ACTIVE)
+              {t("showcase.upcomingTitle")}
             </h3>
           </div>
           <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-            {plannedTrips.length} Planuri Active
+            {t("showcase.activePlansCount").replace("{count}", String(plannedTrips.length))}
           </span>
         </div>
 
@@ -1005,10 +1007,10 @@ export function CssNectarShowcase({
           <div className="p-8 text-center rounded-3xl glass-panel border-olive-500/20">
             <Sparkles className="w-10 h-10 text-olive-600 dark:text-olive-400 mx-auto mb-3" />
             <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              Nu există călătorii planificate momentan.
+              {t("showcase.noPlannedTrips")}
             </p>
             <p className="text-xs text-slate-500 mt-1 mb-4">
-              Creează un itinerar inteligent cu Gemini AI pornind din Sibiu folosind Travel Assist.
+              {t("showcase.noPlannedTripsDesc")}
             </p>
             {(currentUser?.role === "ADMIN" || currentUser?.role === "PARTNER") && (
               <button
@@ -1016,7 +1018,7 @@ export function CssNectarShowcase({
                 className="px-4 py-2 rounded-xl bg-olive-700 hover:bg-olive-800 text-white font-bold text-xs inline-flex items-center gap-2 shadow-sm"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Deschide Travel Assist</span>
+                <span>{t("showcase.openTravelAssist")}</span>
               </button>
             )}
           </div>
@@ -1024,7 +1026,8 @@ export function CssNectarShowcase({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
             {plannedTrips.map((plan) => {
               const planData = plan.planData;
-              const dateStr = new Date(plan.startDate).toLocaleDateString("ro-RO", {
+              const localizedPlan = getLocalizedTrip(plan, language);
+              const dateStr = formatLocalizedDate(plan.startDate, language, {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
@@ -1035,7 +1038,7 @@ export function CssNectarShowcase({
                   key={plan.id}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Deschide planul de călătorie: ${plan.title}`}
+                  aria-label={`Deschide planul de călătorie: ${localizedPlan.title}`}
                   onClick={() => onSelectTrip(plan)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -1050,11 +1053,11 @@ export function CssNectarShowcase({
                     <div className="flex items-center justify-between">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-olive-700 text-white shadow-sm uppercase tracking-wider">
                         <Sparkles className="w-3 h-3 text-olive-200" />
-                        Planificator AI
+                        {t("showcase.aiPlannerBadge")}
                       </span>
                       {planData?.days && (
                         <span className="text-xs font-bold text-olive-200">
-                          {planData.days} Zile
+                          {t("showcase.daysCount").replace("{days}", String(planData.days))}
                         </span>
                       )}
                     </div>
@@ -1062,17 +1065,17 @@ export function CssNectarShowcase({
                     <div className="py-4">
                       <Plane className="w-8 h-8 text-olive-400 mb-2 transform -rotate-45" />
                       <h4 className="text-lg font-black text-white line-clamp-1">
-                        {plan.title}
+                        {localizedPlan.title}
                       </h4>
                       <p className="text-xs text-olive-200/80 mt-1 line-clamp-2">
-                        {planData?.destination || plan.description || "Itinerar generat cu sugestii de obiective."}
+                        {planData?.destination || localizedPlan.description || (language === "ro" ? "Itinerar generat cu sugestii de obiective." : "Itinerary generated with sightseeing suggestions.")}
                       </p>
                     </div>
 
                     <div className="flex items-center justify-between text-[11px] text-olive-300 font-semibold pt-2 border-t border-olive-700/50">
-                      <span>Destinație: {planData?.country || "Plan activ"}</span>
+                      <span>{t("showcase.destinationLabel")} {planData?.country || t("showcase.activePlan")}</span>
                       <span className="flex items-center gap-1 group-hover:translate-x-1 transition-transform text-white">
-                        <span>Vezi Plan</span>
+                        <span>{t("showcase.viewPlan")}</span>
                         <ArrowRight className="w-3 h-3" />
                       </span>
                     </div>
@@ -1084,15 +1087,15 @@ export function CssNectarShowcase({
                       <span>{dateStr}</span>
                     </span>
                     <span className="text-[11px] text-olive-700 dark:text-olive-400 font-bold uppercase">
-                      Status: În Planificare
+                      {t("showcase.statusPlanning")}
                     </span>
                   </div>
 
                   <div className="nectar-content">
                     <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
                       {planData?.allTargetCheckpoints && planData.allTargetCheckpoints.length > 0
-                        ? `Obiective vizate: ${planData.allTargetCheckpoints.join(", ")}`
-                        : "Plan gata de explorare. Adaugă fotografii după călătorie pentru analiza AI."}
+                        ? `${t("showcase.targetCheckpoints")} ${planData.allTargetCheckpoints.join(", ")}`
+                        : t("showcase.planReadyDesc")}
                     </p>
                   </div>
                 </article>

@@ -31,6 +31,7 @@ model Trip {
   id                String        @id @default(uuid())
   title             String
   description       String?
+  translations      String?                         // JSON string: { en: { title, description }, de: { ... }, es: { ... }, fr: { ... } }
   startDate         DateTime
   endDate           DateTime?
   isPrivate         Boolean       @default(false)

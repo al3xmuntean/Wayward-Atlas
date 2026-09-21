@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation, LANGUAGES, Language } from "@/lib/i18n/context";
 import { ChevronDown, Check, Globe } from "lucide-react";
+import { FlagIcon } from "./FlagIcon";
 
 interface LanguageSelectorProps {
   isMobile?: boolean;
@@ -65,7 +66,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
               }`}
             >
               <span className="flex items-center gap-2">
-                <span className="text-base leading-none">{l.flag}</span>
+                <FlagIcon code={l.code} className="w-4 h-3 rounded-[2px] shadow-xs shrink-0" />
                 <span>{l.nativeName}</span>
               </span>
               {language === l.code && <Check className="w-3.5 h-3.5 text-white" aria-hidden="true" />}
@@ -84,12 +85,10 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         aria-expanded={isOpen}
         aria-label={`${t("nav.language")}: ${currentOption.nativeName}`}
         title={`${t("nav.language")}: ${currentOption.nativeName}`}
-        className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl font-bold text-xs text-slate-800 dark:text-slate-200 glass-panel border-olive-500/20 hover:border-olive-500/50 hover:text-olive-700 dark:hover:text-olive-300 transition-all shadow-sm"
+        className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl font-bold text-xs text-slate-800 dark:text-slate-200 glass-panel border-olive-500/20 hover:border-olive-500/50 hover:text-olive-700 dark:hover:text-olive-300 transition-all shadow-sm"
       >
-        <span className="text-sm leading-none" aria-hidden="true">
-          {currentOption.flag}
-        </span>
-        <span className="uppercase tracking-wider text-[11px]">{currentOption.code}</span>
+        <FlagIcon code={currentOption.code} className="w-4 h-3 rounded-[2px] shadow-xs shrink-0" />
+        <span className="uppercase tracking-wider text-[11px] font-black">{currentOption.code}</span>
         <ChevronDown
           className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
             isOpen ? "rotate-180" : ""
@@ -117,9 +116,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
               }`}
             >
               <span className="flex items-center gap-2.5">
-                <span className="text-base leading-none" aria-hidden="true">
-                  {l.flag}
-                </span>
+                <FlagIcon code={l.code} className="w-4 h-3 rounded-[2px] shadow-xs shrink-0" />
                 <span>{l.nativeName}</span>
               </span>
               {language === l.code && (

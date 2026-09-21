@@ -105,6 +105,8 @@ export interface TripData {
   id: string;
   title: string;
   description?: string | null;
+  translations?: string | null;
+  translationsMap?: Record<string, { title?: string; description?: string }>;
   startDate: string; // ISO string
   endDate?: string | null;
   year: number;

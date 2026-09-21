@@ -37,6 +37,7 @@ import {
 import { TripData, PhotoData, SafeUser, VisibilityRole, TravelAchievementReport } from "@/lib/types";
 import { useModalA11y } from "@/hooks/useModalA11y";
 import { useTranslation } from "@/lib/i18n/context";
+import { getLocalizedTrip, formatLocalizedDate } from "@/lib/i18n/localize";
 
 interface TripDrawerProps {
 
@@ -77,7 +78,7 @@ export function TripDrawer({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [updatingPhoto, setUpdatingPhoto] = useState(false);
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [copiedShare, setCopiedShare] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
@@ -105,6 +106,7 @@ export function TripDrawer({
 
   if (!trip) return null;
 
+  const localizedTrip = getLocalizedTrip(trip, language);
   const currentPhoto = selectedPhoto || trip.photos[activePhotoIdx] || trip.photos[0];
   const isAdmin = currentUser?.role === "ADMIN";
   const isPartner = currentUser?.role === "PARTNER" || isAdmin;
@@ -164,11 +166,7 @@ export function TripDrawer({
 
   const formattedDate = trip.isMaskedDate
     ? `Anul ${trip.year}`
-    : new Date(trip.startDate).toLocaleDateString("ro-RO", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+    : formatLocalizedDate(trip.startDate, language);
 
   return (
     <aside
@@ -277,10 +275,10 @@ export function TripDrawer({
       <div className="flex-1 overflow-y-auto p-5 space-y-5">
         {/* Title and description */}
         <div>
-          <h2 id="trip-drawer-title" className="text-2xl font-black tracking-tight text-white">{trip.title}</h2>
-          {trip.description && (
+          <h2 id="trip-drawer-title" className="text-2xl font-black tracking-tight text-white">{localizedTrip.title}</h2>
+          {localizedTrip.description && (
             <p className="mt-2 text-sm text-slate-300 leading-relaxed bg-slate-950/40 p-3 rounded-xl border border-slate-800">
-              {trip.description}
+              {localizedTrip.description}
             </p>
           )}
         </div>

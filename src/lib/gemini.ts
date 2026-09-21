@@ -519,3 +519,65 @@ STRICT REQUIREMENT: Output ONLY a valid JSON object (no markdown surrounding, no
   };
 }
 
+/**
+ * Translates travel content (title & description) from Romanian into a target language using Gemini
+ */
+export async function translateTripContent(params: {
+  title: string;
+  description?: string;
+  targetLang: string;
+  apiKey?: string;
+}): Promise<{ title: string; description: string }> {
+  const { title, description = "", targetLang, apiKey } = params;
+
+  const targetLangNames: Record<string, string> = {
+    en: "English",
+    de: "German",
+    es: "Spanish",
+    fr: "French",
+    ro: "Romanian",
+  };
+
+  const langName = targetLangNames[targetLang] || targetLang;
+  const model = getGeminiModel(apiKey);
+
+  if (model) {
+    try {
+      const prompt = `You are an expert multilingual translator specializing in travel writing and travel journals.
+Translate the following travel trip title and description from Romanian into ${langName}.
+Keep the tone evocative, natural, and elegant, maintaining place names accurately.
+
+Title to translate:
+"${title}"
+
+Description to translate:
+"${description || ""}"
+
+Respond strictly with a JSON object in this format (no markdown, no extra keys):
+{
+  "title": "translated title in ${langName}",
+  "description": "translated description in ${langName}"
+}`;
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+
+      return {
+        title: parsed.title || title,
+        description: parsed.description || description,
+      };
+    } catch (err) {
+      console.warn(`Gemini translation to ${targetLang} failed, using fallback:`, err);
+    }
+  }
+
+  // Fallback: return existing title & description
+  return {
+    title: title,
+    description: description,
+  };
+}
+
+

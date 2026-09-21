@@ -119,6 +119,7 @@ export async function GET(req: NextRequest) {
           allowedUserIds: [],
           isMaskedDate: true,
           isCountryShowcase: true,
+          translations: null,
         };
       });
 
@@ -281,6 +282,7 @@ export async function GET(req: NextRequest) {
         allowedUserIds: trip.allowedUsers.map((a) => a.userId),
         isMaskedDate: false,
         isCountryShowcase: false,
+        translations: trip.translations,
       };
     });
 
@@ -317,6 +319,7 @@ export async function POST(req: NextRequest) {
       partnerNotes,
       photos = [],
       allowedUserIds,
+      translations,
     } = body;
 
     const isPlanned = status === "PLANNED";
@@ -343,6 +346,7 @@ export async function POST(req: NextRequest) {
         planData: planData ? (typeof planData === "string" ? planData : JSON.stringify(planData)) : null,
         withPartner: isPlanned ? true : Boolean(withPartner),
         partnerNotes: partnerNotes || null,
+        translations: typeof translations === "string" ? translations : translations ? JSON.stringify(translations) : null,
         createdById: user.id,
         allowedUsers: {
           create: (allowedUserIds || []).map((uid: string) => ({

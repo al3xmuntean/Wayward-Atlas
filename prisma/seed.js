@@ -73,6 +73,24 @@ async function main() {
     data: {
       title: "Expediție în Alpii Elvețieni",
       description: "Trekking spectaculos în jurul masivului Matterhorn și văile alpine din Zermatt.",
+      translations: JSON.stringify({
+        en: {
+          title: "Swiss Alps Expedition",
+          description: "Spectacular trekking around the Matterhorn massif and the alpine valleys of Zermatt.",
+        },
+        de: {
+          title: "Schweizer Alpen Expedition",
+          description: "Spektakuläres Trekking rund um das Matterhorn-Massiv und die alpinen Täler von Zermatt.",
+        },
+        es: {
+          title: "Expedición a los Alpes Suizos",
+          description: "Trekking espectacular alrededor del macizo del Cervino y los valles alpinos de Zermatt.",
+        },
+        fr: {
+          title: "Expédition dans les Alpes Suisses",
+          description: "Trekking spectaculaire autour du massif du Cervin et des vallées alpines de Zermatt.",
+        },
+      }),
       startDate: new Date("2021-07-15T09:30:00Z"),
       endDate: new Date("2021-07-22T18:00:00Z"),
       isPrivate: false,
@@ -121,6 +139,24 @@ async function main() {
     data: {
       title: "Vacanță pe Coasta Amalfi & Roma",
       description: "Istorie antică în Roma și peisaje dramatice de coastă în Positano și Amalfi.",
+      translations: JSON.stringify({
+        en: {
+          title: "Amalfi Coast & Rome Getaway",
+          description: "Ancient history in Rome and dramatic coastal scenery across Positano and Amalfi.",
+        },
+        de: {
+          title: "Amalfiküste & Rom Urlaub",
+          description: "Antike Geschichte in Rom und dramatische Küstenlandschaften in Positano und Amalfi.",
+        },
+        es: {
+          title: "Vacaciones en la Costa Amalfitana y Roma",
+          description: "Historia antigua en Roma y paisajes costeros impresionantes en Positano y Amalfi.",
+        },
+        fr: {
+          title: "Séjour sur la Côte Amalfitaine et Rome",
+          description: "Histoire antique à Rome et paysages côtiers spectaculaires à Positano et Amalfi.",
+        },
+      }),
       startDate: new Date("2022-09-05T08:00:00Z"),
       endDate: new Date("2022-09-14T20:00:00Z"),
       isPrivate: false,
@@ -169,6 +205,24 @@ async function main() {
     data: {
       title: "Explorare Japonia: Tokyo, Kyoto & Muntele Fuji",
       description: "Neonul din Shinjuku, templele liniștite din Kyoto și maiestuosul Munte Fuji.",
+      translations: JSON.stringify({
+        en: {
+          title: "Japan Exploration: Tokyo, Kyoto & Mount Fuji",
+          description: "Neon lights in Shinjuku, serene temples in Kyoto, and the majestic Mount Fuji.",
+        },
+        de: {
+          title: "Japan Erkundung: Tokio, Kyoto & Berg Fuji",
+          description: "Neonlichter in Shinjuku, ruhige Tempel in Kyoto und der majestätische Berg Fuji.",
+        },
+        es: {
+          title: "Exploración de Japón: Tokio, Kioto y Monte Fuji",
+          description: "Luces de neón en Shinjuku, templos tranquilos en Kioto y el majestuoso Monte Fuji.",
+        },
+        fr: {
+          title: "Exploration du Japon: Tokyo, Kyoto & Mont Fuji",
+          description: "Néons de Shinjuku, temples paisibles de Kyoto et le majestueux Mont Fuji.",
+        },
+      }),
       startDate: new Date("2023-04-10T12:00:00Z"),
       endDate: new Date("2023-04-24T22:00:00Z"),
       isPrivate: false,
@@ -232,6 +286,24 @@ async function main() {
     data: {
       title: "Santorini & Ciclade în Doi",
       description: "Apusuri de neuitat în Oia, străduțe albe și croazieră romantică pe caldera la apus.",
+      translations: JSON.stringify({
+        en: {
+          title: "Romantic Santorini & the Cyclades",
+          description: "Unforgettable sunsets in Oia, whitewashed alleys, and a romantic sunset caldera cruise.",
+        },
+        de: {
+          title: "Romantisches Santorin & die Kykladen",
+          description: "Unvergessliche Sonnenuntergänge in Oia, weiße Gassen und eine romantische Sonnenuntergangs-Kreuzfahrt auf der Caldera.",
+        },
+        es: {
+          title: "Santorini y Cícladas en Pareja",
+          description: "Atardeceres inolvidables en Oia, callejuelas blancas y un romántico crucero por la caldera al atardecer.",
+        },
+        fr: {
+          title: "Santorin & les Cyclades en Duo",
+          description: "Couchers de soleil inoubliables à Oia, ruelles blanchies à la chaux et croisière romantique au coucher du soleil dans la caldeira.",
+        },
+      }),
       startDate: new Date("2024-06-01T10:00:00Z"),
       endDate: new Date("2024-06-09T18:00:00Z"),
       isPrivate: true,

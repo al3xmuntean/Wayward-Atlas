@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { X, Save, Trash2, Heart, Shield, Calendar, MapPin, Loader2, Sparkles } from "lucide-react";
+import { X, Save, Trash2, Heart, Shield, Calendar, MapPin, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { TripData, VisibilityRole } from "@/lib/types";
 import { useModalA11y } from "@/hooks/useModalA11y";
+import { FlagIcon } from "@/components/FlagIcon";
+import { Language } from "@/lib/i18n/types";
+import { useTranslation } from "@/lib/i18n/context";
 
 interface EditTripModalProps {
   trip: TripData | null;
@@ -20,8 +23,19 @@ export function EditTripModal({
   onTripUpdated,
   onTripDeleted,
 }: EditTripModalProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [activeLangTab, setActiveLangTab] = useState<Language>("ro");
+  const [translations, setTranslations] = useState<Record<string, { title: string; description: string }>>({
+    en: { title: "", description: "" },
+    de: { title: "", description: "" },
+    es: { title: "", description: "" },
+    fr: { title: "", description: "" },
+  });
+  const [translatingLang, setTranslatingLang] = useState<string | null>(null);
+  const [translateStatus, setTranslateStatus] = useState<string | null>(null);
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [withPartner, setWithPartner] = useState(false);
@@ -44,10 +58,102 @@ export function EditTripModal({
       setPartnerNotes(trip.partnerNotes || "");
       setMinRole(trip.minRole || "VIEWER");
       setError(null);
+      setActiveLangTab("ro");
+
+      let parsedTranslations: Record<string, { title: string; description: string }> = {
+        en: { title: "", description: "" },
+        de: { title: "", description: "" },
+        es: { title: "", description: "" },
+        fr: { title: "", description: "" },
+      };
+
+      if (trip.translations) {
+        try {
+          const parsed = typeof trip.translations === "string" ? JSON.parse(trip.translations) : trip.translations;
+          if (parsed && typeof parsed === "object") {
+            parsedTranslations = {
+              en: { title: parsed.en?.title || "", description: parsed.en?.description || "" },
+              de: { title: parsed.de?.title || "", description: parsed.de?.description || "" },
+              es: { title: parsed.es?.title || "", description: parsed.es?.description || "" },
+              fr: { title: parsed.fr?.title || "", description: parsed.fr?.description || "" },
+            };
+          }
+        } catch {}
+      } else if (trip.translationsMap) {
+        parsedTranslations = {
+          en: { title: trip.translationsMap.en?.title || "", description: trip.translationsMap.en?.description || "" },
+          de: { title: trip.translationsMap.de?.title || "", description: trip.translationsMap.de?.description || "" },
+          es: { title: trip.translationsMap.es?.title || "", description: trip.translationsMap.es?.description || "" },
+          fr: { title: trip.translationsMap.fr?.title || "", description: trip.translationsMap.fr?.description || "" },
+        };
+      }
+      setTranslations(parsedTranslations);
     }
   }, [trip]);
 
-  if (!isOpen || !trip) return null;
+  const handleAiTranslate = async (target?: Language) => {
+    if (!title.trim()) {
+      alert("Te rugăm să introduci mai întâi titlul călătoriei în română!");
+      return;
+    }
+
+    try {
+      if (!target) {
+        setTranslatingLang("all");
+        setTranslateStatus("Se traduce cu AI în EN, DE, ES, FR...");
+        const res = await fetch("/api/ai/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description,
+            all: true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Eroare la traducere");
+
+        if (data.translations) {
+          setTranslations((prev) => ({
+            ...prev,
+            en: data.translations.en || prev.en,
+            de: data.translations.de || prev.de,
+            es: data.translations.es || prev.es,
+            fr: data.translations.fr || prev.fr,
+          }));
+          setTranslateStatus("Traduceri generate cu succes pentru toate limbile!");
+          setTimeout(() => setTranslateStatus(null), 3000);
+        }
+      } else {
+        setTranslatingLang(target);
+        const res = await fetch("/api/ai/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description,
+            targetLang: target,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Eroare la traducere");
+
+        if (data.translation) {
+          setTranslations((prev) => ({
+            ...prev,
+            [target]: {
+              title: data.translation.title || "",
+              description: data.translation.description || "",
+            },
+          }));
+        }
+      }
+    } catch (err: any) {
+      alert(err.message || "A apărut o problemă la traducere");
+    } finally {
+      setTranslatingLang(null);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +161,7 @@ export function EditTripModal({
     setError(null);
 
     try {
-      const res = await fetch(`/api/trips/${trip.id}`, {
+      const res = await fetch(`/api/trips/${trip?.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -66,6 +172,7 @@ export function EditTripModal({
           withPartner,
           partnerNotes: withPartner ? partnerNotes : null,
           minRole,
+          translations: JSON.stringify(translations),
         }),
       });
 
@@ -74,16 +181,20 @@ export function EditTripModal({
         throw new Error(data.error || "Failed to update trip");
       }
 
-      onTripUpdated({
-        ...trip,
-        title,
-        description,
-        startDate: new Date(startDate).toISOString(),
-        endDate: endDate ? new Date(endDate).toISOString() : null,
-        withPartner,
-        partnerNotes: withPartner ? partnerNotes : null,
-        minRole,
-      });
+      if (trip) {
+        onTripUpdated({
+          ...trip,
+          title,
+          description,
+          startDate: new Date(startDate).toISOString(),
+          endDate: endDate ? new Date(endDate).toISOString() : null,
+          withPartner,
+          partnerNotes: withPartner ? partnerNotes : null,
+          minRole,
+          translations: JSON.stringify(translations),
+          translationsMap: translations,
+        });
+      }
 
       onClose();
     } catch (err: any) {
@@ -94,6 +205,7 @@ export function EditTripModal({
   };
 
   const handleDelete = async () => {
+    if (!trip) return;
     if (!confirm(`Ești sigur că vrei să ștergi călătoria „${trip.title}”? Această acțiune nu poate fi anulată!`)) {
       return;
     }
@@ -157,33 +269,191 @@ export function EditTripModal({
         )}
 
         <form onSubmit={handleSave} className="space-y-4">
-          {/* Title */}
-          <div>
-            <label htmlFor="edit-title" className="text-xs font-semibold text-slate-300 mb-1 block">
-              Titlu Călătorie
-            </label>
-            <input
-              id="edit-title"
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-olive-500 transition-colors"
-            />
-          </div>
+          {/* Multilingual Title & Description Studio */}
+          <div className="rounded-2xl bg-slate-950/70 border border-olive-500/25 p-3.5 space-y-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+              <div>
+                <div className="flex items-center gap-2 text-olive-400 font-bold text-xs uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{t("admin.translationsTitle")}</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Româna este baza călătoriei. Poți traduce și ajusta titlul & descrierea în alte limbi.
+                </p>
+              </div>
 
-          {/* Description */}
-          <div>
-            <label htmlFor="edit-desc" className="text-xs font-semibold text-slate-300 mb-1 block">
-              Descriere Generală
-            </label>
-            <textarea
-              id="edit-desc"
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-olive-500 transition-colors resize-none"
-            />
+              {/* 1-Click AI Translate All Button */}
+              <button
+                type="button"
+                onClick={() => handleAiTranslate()}
+                disabled={!title.trim() || translatingLang !== null}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-olive-600 hover:bg-olive-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shrink-0"
+              >
+                {translatingLang === "all" ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>{t("admin.translating")}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{t("admin.aiTranslateAllBtn")}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {translateStatus && (
+              <div className="p-2 rounded-xl bg-olive-950/60 border border-olive-500/40 text-xs text-olive-200 flex items-center gap-2 animate-fade-in">
+                <CheckCircle2 className="w-3.5 h-3.5 text-olive-400 shrink-0" />
+                <span>{translateStatus}</span>
+              </div>
+            )}
+
+            {/* Language Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl border border-slate-800">
+              {(["ro", "en", "de", "es", "fr"] as Language[]).map((lang) => {
+                const isActive = activeLangTab === lang;
+                const hasContent =
+                  lang === "ro"
+                    ? Boolean(title.trim())
+                    : Boolean(translations[lang]?.title?.trim());
+
+                return (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => setActiveLangTab(lang)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      isActive
+                        ? "bg-olive-600/30 text-olive-200 border border-olive-500/40 shadow-xs"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent"
+                    }`}
+                  >
+                    <FlagIcon code={lang} className="w-4 h-2.5 rounded-xs" />
+                    <span>
+                      {lang === "ro" && "Română (Bază)"}
+                      {lang === "en" && "English"}
+                      {lang === "de" && "Deutsch"}
+                      {lang === "es" && "Español"}
+                      {lang === "fr" && "Français"}
+                    </span>
+                    {hasContent && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-olive-400 ml-0.5" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tab Content */}
+            {activeLangTab === "ro" ? (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="edit-title" className="text-xs font-semibold text-slate-300 block">
+                      Titlu Călătorie (Română - Principal) *
+                    </label>
+                    <span className="text-[10px] text-olive-400 font-semibold uppercase">Limba Bază</span>
+                  </div>
+                  <input
+                    id="edit-title"
+                    type="text"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-olive-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-desc" className="text-xs font-semibold text-slate-300 mb-1 block">
+                    Descriere Generală (Română)
+                  </label>
+                  <textarea
+                    id="edit-desc"
+                    rows={2}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-olive-500 transition-colors resize-none"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FlagIcon code={activeLangTab} className="w-4 h-3 rounded-xs" />
+                    <span className="text-xs font-bold text-slate-200">
+                      Versiunea în {activeLangTab.toUpperCase()}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAiTranslate(activeLangTab)}
+                    disabled={!title.trim() || translatingLang !== null}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-olive-300 hover:text-olive-200 text-xs font-medium border border-olive-500/30 transition-all disabled:opacity-40"
+                  >
+                    {translatingLang === activeLangTab ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Se traduce...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3 text-olive-400" />
+                        <span>Traduce doar {activeLangTab.toUpperCase()} cu AI</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-200 mb-1 block">
+                    Titlu Călătorie ({activeLangTab.toUpperCase()})
+                  </label>
+                  <input
+                    type="text"
+                    value={translations[activeLangTab]?.title || ""}
+                    onChange={(e) =>
+                      setTranslations((prev) => ({
+                        ...prev,
+                        [activeLangTab]: {
+                          ...prev[activeLangTab],
+                          title: e.target.value,
+                        },
+                      }))
+                    }
+                    placeholder={`Titlul tradus în ${activeLangTab.toUpperCase()}...`}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-olive-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-200 mb-1 block">
+                    Descriere Călătorie ({activeLangTab.toUpperCase()})
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={translations[activeLangTab]?.description || ""}
+                    onChange={(e) =>
+                      setTranslations((prev) => ({
+                        ...prev,
+                        [activeLangTab]: {
+                          ...prev[activeLangTab],
+                          description: e.target.value,
+                        },
+                      }))
+                    }
+                    placeholder={`Descrierea tradusă în ${activeLangTab.toUpperCase()}...`}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-olive-500 resize-none"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Poți edita sau corecta oricând această traducere manual.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Dates */}

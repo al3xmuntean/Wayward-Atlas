@@ -126,6 +126,7 @@ export async function GET(
       createdById: trip.createdById,
       comments: [],
       allowedUserIds: trip.allowedUsers.map((au) => au.userId),
+      translations: trip.translations,
     };
 
     return NextResponse.json({ trip: formattedTrip });
@@ -154,6 +155,7 @@ export async function PATCH(
       minRole,
       withPartner,
       partnerNotes,
+      translations,
     } = body;
 
     const updateData: any = {};
@@ -211,6 +213,10 @@ export async function PATCH(
         return NextResponse.json({ error: "Partner notes exceed 5000 characters limit" }, { status: 400 });
       }
       updateData.partnerNotes = typeof partnerNotes === "string" ? partnerNotes.trim() : null;
+    }
+
+    if (translations !== undefined) {
+      updateData.translations = typeof translations === "string" ? translations : translations ? JSON.stringify(translations) : null;
     }
 
     const updatedTrip = await prisma.trip.update({
