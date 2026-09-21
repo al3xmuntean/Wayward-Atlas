@@ -249,8 +249,8 @@ export function Navbar({
             >
               {/* Role Badge */}
               {user.role === "ADMIN" ? (
-                <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30">
-                  <Shield className="w-3 h-3 text-purple-600 dark:text-purple-400" aria-hidden="true" />
+                <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg bg-olive-500/25 text-olive-900 dark:text-olive-200 border border-olive-500/40">
+                  <Shield className="w-3 h-3 text-olive-700 dark:text-olive-400" aria-hidden="true" />
                   Admin
                 </span>
               ) : user.role === "PARTNER" ? (

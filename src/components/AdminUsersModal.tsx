@@ -88,9 +88,9 @@ export function AdminUsersModal({ isOpen, onClose }: AdminUsersModalProps) {
   const roleConfig: Record<UserRole, { label: string; color: string; activeClass: string; icon: React.ReactNode }> = {
     ADMIN: {
       label: "Admin",
-      color: "purple",
-      activeClass: "bg-purple-600 text-white shadow-glow border-purple-500",
-      icon: <Shield className="w-3 h-3 text-purple-300" aria-hidden="true" />,
+      color: "olive",
+      activeClass: "bg-olive-700 text-white shadow-glow border-olive-500",
+      icon: <Shield className="w-3 h-3 text-olive-200" aria-hidden="true" />,
     },
     PARTNER: {
       label: "Partener",
@@ -235,13 +235,13 @@ export function AdminUsersModal({ isOpen, onClose }: AdminUsersModalProps) {
                           ? "Utilizatorul poate vedea conținutul privat"
                           : "Apasă pentru a-i oferi acces privat"
                       }
-                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border font-semibold transition-all focus:ring-2 focus:ring-purple-400 ${
+                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border font-semibold transition-all focus:ring-2 focus:ring-olive-400 ${
                         u.role === "ADMIN" || u.role === "PARTNER" || u.canViewPrivate
-                          ? "bg-purple-950/80 border-purple-500 text-purple-200"
+                          ? "bg-olive-950/80 border-olive-500 text-olive-200"
                           : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
                       }`}
                     >
-                      <Lock className="w-3 h-3 text-purple-400" aria-hidden="true" />
+                      <Lock className="w-3 h-3 text-olive-400" aria-hidden="true" />
                       <span>{u.role === "ADMIN" || u.role === "PARTNER" || u.canViewPrivate ? "Privat" : "Standard"}</span>
                     </button>
                   </div>

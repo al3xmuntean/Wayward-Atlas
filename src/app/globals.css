@@ -283,8 +283,8 @@ body {
 }
 
 .marker-pin.private-marker {
-  background: linear-gradient(135deg, #a855f7, #c084fc);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.6), inset 0 0 0 2px #ffffff;
+  background: linear-gradient(135deg, #3f4e2c, #627c40);
+  box-shadow: 0 4px 12px rgba(63, 78, 44, 0.7), inset 0 0 0 2px #ffffff;
 }
 
 .marker-pin.country-marker {

@@ -289,7 +289,7 @@ export const AtlasWrappedModal: React.FC<AtlasWrappedModalProps> = ({
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-center space-y-1">
-                  <span className="text-xl font-bold text-cyan-300 block">{moonPct}%</span>
+                  <span className="text-xl font-bold text-olive-300 block">{moonPct}%</span>
                   <span className="text-[10px] text-slate-400 uppercase font-bold">Până la Lună</span>
                 </div>
               </div>

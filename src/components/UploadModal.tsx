@@ -523,14 +523,14 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="ex: Turul Japoniei: Kyoto & Tokyo"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-cyan-400"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-olive-500"
               />
             </div>
 
             <div>
               <label className="text-xs font-bold text-slate-300 mb-1.5 block">Data de început *</label>
-              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-cyan-400">
-                <Calendar className="w-4 h-4 text-cyan-400 mr-2 shrink-0" />
+              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-olive-500">
+                <Calendar className="w-4 h-4 text-olive-400 mr-2 shrink-0" />
                 <input
                   type="date"
                   required
@@ -543,7 +543,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
 
             <div>
               <label className="text-xs font-bold text-slate-300 mb-1.5 block">Data de sfârșit (Opțional)</label>
-              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-cyan-400">
+              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-olive-500">
                 <Calendar className="w-4 h-4 text-slate-500 mr-2 shrink-0" />
                 <input
                   type="date"
@@ -562,7 +562,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Câteva cuvinte despre traseu, atmosferă și locurile explorate..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-olive-500 resize-none"
             />
           </div>
 
@@ -624,7 +624,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                       onClick={() => setTripMinRole(r)}
                       className={`py-1.5 px-2 rounded-xl text-[11px] font-semibold border transition-all text-center ${
                         tripMinRole === r
-                          ? "bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-glow"
+                          ? "bg-olive-500/20 border-olive-400 text-olive-200 shadow-glow"
                           : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
                       }`}
                     >
@@ -650,7 +650,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-700 hover:border-cyan-400 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-slate-950/50 hover:bg-slate-900/50"
+              className="border-2 border-dashed border-slate-700 hover:border-olive-500 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-slate-950/50 hover:bg-slate-900/50"
             >
               <input
                 ref={fileInputRef}
@@ -660,7 +660,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                 onChange={(e) => handleFilesSelected(e.target.files)}
                 className="hidden"
               />
-              <Upload className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+              <Upload className="w-8 h-8 text-olive-400 mx-auto mb-2" />
               <p className="text-sm font-semibold text-slate-200">Trage fotografiile aici sau apasă pentru a alege</p>
               <p className="text-xs text-slate-500 mt-1">
                 Extracție automată GPS EXIF • Detectare AI persoane & cuplu • Sugestii automate de permisiuni
@@ -691,7 +691,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                           : p.minRole === "PARTNER"
                           ? "bg-rose-950 border-rose-600 text-rose-300"
                           : p.hasPeople
-                          ? "bg-purple-950 border-purple-600 text-purple-300"
+                          ? "bg-olive-950 border-olive-600 text-olive-300"
                           : "bg-slate-800 border-slate-700 text-slate-300 hover:text-white"
                       }`}
                     >
@@ -797,11 +797,11 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                         }}
                         className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-semibold border transition-all ${
                           currentActive.minRole === "ADMIN"
-                            ? "bg-purple-500/20 border-purple-400 text-purple-200 shadow-glow"
+                            ? "bg-olive-500/20 border-olive-400 text-olive-200 shadow-glow"
                             : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
                         }`}
                       >
-                        <Shield className="w-3 h-3 text-purple-400" />
+                        <Shield className="w-3 h-3 text-olive-400" />
                         <span>Doar Admin</span>
                       </button>
                     </div>
@@ -839,7 +839,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
 
                   {/* Location Confirmation & Manual Adjustment */}
                   <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                    <span className="text-xs font-bold text-cyan-400 block flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-olive-400 block flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5" />
                       Locație Geografică (Confirmă sau Ajustează):
                     </span>
@@ -857,7 +857,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: Turnul Eiffel"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
                         />
                       </div>
                       <div>
@@ -872,7 +872,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: Paris"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
                         />
                       </div>
                       <div>
@@ -887,7 +887,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: Franța"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
                         />
                       </div>
                     </div>
@@ -906,7 +906,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: 48.8584"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
                         />
                       </div>
                       <div>
@@ -922,7 +922,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: 2.2945"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
                         />
                       </div>
                     </div>
@@ -957,13 +957,13 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                           value={manualSearchQuery}
                           onChange={(e) => setManualSearchQuery(e.target.value)}
                           placeholder="Caută oraș sau obiectiv turistic..."
-                          className="flex-1 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                          className="flex-1 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
                         />
                         <button
                           type="button"
                           onClick={handleManualSearch}
                           disabled={manualSearching}
-                          className="px-3 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all flex items-center gap-1"
+                          className="px-3 py-1 rounded-lg bg-olive-600 hover:bg-olive-500 text-white text-xs font-bold transition-all flex items-center gap-1"
                         >
                           {manualSearching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
                           <span>Caută</span>

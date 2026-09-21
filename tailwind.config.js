@@ -53,7 +53,6 @@ module.exports = {
       boxShadow: {
         glow: "0 0 25px -5px rgba(107, 142, 35, 0.45)",
         "glow-olive": "0 0 30px -5px rgba(125, 153, 87, 0.45)",
-        "glow-cyan": "0 0 30px -5px rgba(6, 182, 212, 0.4)",
       },
     },
   },

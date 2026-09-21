@@ -17,11 +17,11 @@ interface VirtualPassportModalProps {
 
 const STAMP_COLORS = [
   "border-olive-500 text-olive-400 bg-olive-950/20",
-  "border-cyan-500 text-cyan-400 bg-cyan-950/20",
+  "border-olive-400 text-olive-300 bg-olive-950/30",
   "border-amber-500 text-amber-400 bg-amber-950/20",
   "border-rose-500 text-rose-400 bg-rose-950/20",
   "border-emerald-500 text-emerald-400 bg-emerald-950/20",
-  "border-purple-500 text-purple-400 bg-purple-950/20",
+  "border-lime-600 text-lime-400 bg-lime-950/20",
 ];
 
 const STAMP_ROTATIONS = ["-rotate-3", "rotate-2", "-rotate-6", "rotate-4", "-rotate-2", "rotate-6"];
@@ -166,7 +166,7 @@ export const VirtualPassportModal: React.FC<VirtualPassportModalProps> = ({
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-                    <span className="text-2xl font-black text-cyan-300 block">{trips.filter(t => t.status !== "PLANNED").length}</span>
+                    <span className="text-2xl font-black text-olive-300 block">{trips.filter(t => t.status !== "PLANNED").length}</span>
                     <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Expediții</span>
                   </div>
                 </div>

@@ -47,17 +47,17 @@ export function TimelineSlider({
     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 max-w-[92vw] pointer-events-auto">
       {/* Month selector if a year is picked and not in guest mode */}
       {selectedYear !== null && !isGuest && (
-        <div className="flex items-center gap-1 glass-panel px-3 py-1.5 rounded-full border-cyan-500/20 animate-fade-in shadow-lg">
-          <span className="text-[11px] font-semibold text-cyan-400 mr-1 flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
+        <div className="flex items-center gap-1 glass-panel px-3 py-1.5 rounded-full border-olive-500/30 animate-fade-in shadow-lg">
+          <span className="text-[11px] font-semibold text-olive-700 dark:text-olive-300 mr-1 flex items-center gap-1">
+            <Calendar className="w-3 h-3 text-olive-600 dark:text-olive-400" />
             Luni:
           </span>
           <button
             onClick={() => onSelectMonth(null)}
             className={`px-2 py-0.5 rounded-full text-xs transition-all ${
               selectedMonth === null
-                ? "bg-cyan-500 text-white font-bold shadow-glow"
-                : "text-slate-300 hover:text-white hover:bg-slate-800"
+                ? "bg-olive-600 text-white font-bold shadow-glow-olive"
+                : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-olive-500/20"
             }`}
           >
             Tot anul
@@ -68,8 +68,8 @@ export function TimelineSlider({
               onClick={() => onSelectMonth(idx + 1)}
               className={`px-1.5 py-0.5 rounded-md text-[11px] transition-all ${
                 selectedMonth === idx + 1
-                  ? "bg-cyan-500 text-white font-bold"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+                  ? "bg-olive-600 text-white font-bold"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-olive-500/15"
               }`}
             >
               {name}
@@ -79,7 +79,7 @@ export function TimelineSlider({
       )}
 
       {/* Main Year Scrubber Bar */}
-      <div className="flex items-center gap-2 glass-panel-glow px-4 py-2.5 rounded-2xl">
+      <div className="flex items-center gap-2 glass-panel-glow px-4 py-2.5 rounded-2xl border-olive-500/40">
         {/* Play / Pause Auto-Tour Button */}
         <button
           onClick={() => setIsPlaying(!isPlaying)}
@@ -88,8 +88,8 @@ export function TimelineSlider({
           title={isPlaying ? "Pauză tur cronologic" : "Pornește turul cronologic al globului"}
           className={`p-2 rounded-xl text-white transition-all ${
             isPlaying
-              ? "bg-cyan-500 text-slate-950 shadow-glow animate-pulse"
-              : "bg-slate-800/80 hover:bg-slate-700 text-cyan-300"
+              ? "bg-olive-600 text-white shadow-glow-olive animate-pulse"
+              : "bg-olive-900/15 dark:bg-slate-800/80 hover:bg-olive-500/30 text-olive-800 dark:text-olive-300"
           }`}
         >
           {isPlaying ? <Pause className="w-4 h-4 fill-current" aria-hidden="true" /> : <Play className="w-4 h-4 fill-current ml-0.5" aria-hidden="true" />}
@@ -106,14 +106,14 @@ export function TimelineSlider({
           aria-pressed={selectedYear === null}
           className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
             selectedYear === null
-              ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-glow"
-              : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+              ? "bg-gradient-to-r from-olive-700 to-olive-600 text-white shadow-glow-olive"
+              : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-olive-500/15"
           }`}
         >
           Toate Călătoriile
         </button>
 
-        <div className="w-px h-5 bg-slate-700/60 mx-1" aria-hidden="true" />
+        <div className="w-px h-5 bg-olive-500/30 mx-1" aria-hidden="true" />
 
         {/* Year Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto max-w-[60vw] py-0.5 no-scrollbar" role="group" aria-label="Filtrare după an">
@@ -131,13 +131,13 @@ export function TimelineSlider({
                 aria-pressed={isSelected}
                 className={`group relative px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                   isSelected
-                    ? "bg-cyan-500 text-slate-950 shadow-glow scale-105"
-                    : "text-slate-300 hover:text-white bg-slate-800/40 hover:bg-slate-700/60"
+                    ? "bg-olive-600 text-white shadow-glow-olive scale-105"
+                    : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-olive-900/10 dark:bg-slate-800/40 hover:bg-olive-500/20"
                 }`}
               >
                 <span>{year}</span>
                 {isSelected && (
-                  <span className="absolute -top-1 right-1 w-1.5 h-1.5 rounded-full bg-white ring-1 ring-cyan-300" aria-hidden="true" />
+                  <span className="absolute -top-1 right-1 w-1.5 h-1.5 rounded-full bg-white ring-1 ring-olive-400" aria-hidden="true" />
                 )}
               </button>
             );

@@ -71,9 +71,9 @@ export default function PortalPage() {
       {/* Back to Globe button */}
       <Link
         href="/"
-        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 rounded-2xl glass-panel text-slate-300 hover:text-white border-slate-700/60 hover:border-cyan-500/50 transition-all text-xs font-semibold"
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 rounded-2xl glass-panel text-slate-300 hover:text-white border-slate-700/60 hover:border-olive-500/50 transition-all text-xs font-semibold"
       >
-        <ArrowLeft className="w-4 h-4 text-cyan-400" />
+        <ArrowLeft className="w-4 h-4 text-olive-400" />
         <span>Înapoi la Globul 3D (Public)</span>
       </Link>
 
@@ -99,14 +99,14 @@ export default function PortalPage() {
             <button
               type="button"
               onClick={() => quickLogin("admin@wayward.atlas", "admin123")}
-              className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-950/70 hover:bg-purple-900/90 text-purple-200 border border-purple-600/40 text-xs font-semibold transition-all hover:scale-[1.02] text-left"
+              className="flex items-center gap-2 p-2.5 rounded-xl bg-olive-950/70 hover:bg-olive-900/90 text-olive-200 border border-olive-600/40 text-xs font-semibold transition-all hover:scale-[1.02] text-left"
             >
-              <div className="p-1 rounded-lg bg-purple-900/60 text-purple-400 shrink-0">
+              <div className="p-1 rounded-lg bg-olive-900/60 text-olive-400 shrink-0">
                 <Shield className="w-4 h-4" />
               </div>
               <div className="overflow-hidden">
                 <span className="block font-bold text-white truncate">Admin (Alex)</span>
-                <span className="text-[10px] text-purple-300 block truncate">Acces Total & Studio</span>
+                <span className="text-[10px] text-olive-300 block truncate">Acces Total & Studio</span>
               </div>
             </button>
 
@@ -144,14 +144,14 @@ export default function PortalPage() {
             <button
               type="button"
               onClick={() => quickLogin("viewer@wayward.atlas", "viewer123")}
-              className="flex items-center gap-2 p-2.5 rounded-xl bg-cyan-950/70 hover:bg-cyan-900/90 text-cyan-200 border border-cyan-600/40 text-xs font-semibold transition-all hover:scale-[1.02] text-left"
+              className="flex items-center gap-2 p-2.5 rounded-xl bg-olive-900/40 hover:bg-olive-900/60 text-olive-200 border border-olive-700/40 text-xs font-semibold transition-all hover:scale-[1.02] text-left"
             >
-              <div className="p-1 rounded-lg bg-cyan-900/60 text-cyan-400 shrink-0">
+              <div className="p-1 rounded-lg bg-olive-900/60 text-olive-400 shrink-0">
                 <Eye className="w-4 h-4" />
               </div>
               <div className="overflow-hidden">
                 <span className="block font-bold text-white truncate">Viewer (Elena)</span>
-                <span className="text-[10px] text-cyan-300 block truncate">Date Complete / Fără Oameni</span>
+                <span className="text-[10px] text-olive-300 block truncate">Date Complete / Fără Oameni</span>
               </div>
             </button>
           </div>
@@ -163,7 +163,7 @@ export default function PortalPage() {
             href="/api/auth/google"
             className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs sm:text-sm transition-all shadow-md hover:scale-[1.01] active:scale-[0.99]"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -181,20 +181,21 @@ export default function PortalPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            <span>Continuă cu Google</span>
+            <span>Conectare securizată cu Google</span>
           </a>
+        </div>
 
-          <div className="flex items-center my-4">
-            <div className="flex-1 border-t border-slate-800" />
-            <span className="px-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-              sau cu email și parolă
-            </span>
-            <div className="flex-1 border-t border-slate-800" />
+        <div className="relative mb-5 text-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-800"></div>
           </div>
+          <span className="relative px-3 bg-slate-900 text-[11px] text-slate-400 font-semibold uppercase">
+            Sau cu cont intern
+          </span>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800/60 text-xs text-rose-300">
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
             {error}
           </div>
         )}
@@ -204,7 +205,7 @@ export default function PortalPage() {
           {isRegister && (
             <div>
               <label className="text-xs font-medium text-slate-300 mb-1 block">Nume complet</label>
-              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-cyan-400 transition-colors">
+              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-olive-500 transition-colors">
                 <User className="w-4 h-4 text-slate-500 mr-2" />
                 <input
                   type="text"
@@ -220,7 +221,7 @@ export default function PortalPage() {
 
           <div>
             <label className="text-xs font-medium text-slate-300 mb-1 block">Email</label>
-            <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-cyan-400 transition-colors">
+            <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-olive-500 transition-colors">
               <Mail className="w-4 h-4 text-slate-500 mr-2" />
               <input
                 type="email"
@@ -235,7 +236,7 @@ export default function PortalPage() {
 
           <div>
             <label className="text-xs font-medium text-slate-300 mb-1 block">Parolă</label>
-            <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-cyan-400 transition-colors">
+            <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-olive-500 transition-colors">
               <Lock className="w-4 h-4 text-slate-500 mr-2" />
               <input
                 type="password"
@@ -251,7 +252,7 @@ export default function PortalPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm transition-all shadow-glow hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-olive-700 to-olive-600 hover:from-olive-600 hover:to-olive-500 text-white font-bold text-sm transition-all shadow-glow-olive hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
           >
             {loading ? "Se procesează..." : isRegister ? "Înregistrare" : "Conectare"}
           </button>
@@ -264,7 +265,7 @@ export default function PortalPage() {
               setIsRegister(!isRegister);
               setError(null);
             }}
-            className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+            className="text-xs text-olive-400 hover:text-olive-300 transition-colors"
           >
             {isRegister
               ? "Ai deja cont? Conectează-te aici"

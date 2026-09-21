@@ -874,7 +874,7 @@ export function CssNectarShowcase({
           <div className="glass-panel p-6 rounded-3xl border border-olive-500/30 hover:border-olive-500/60 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="p-2.5 rounded-2xl bg-purple-500/20 text-purple-600">
+                <div className="p-2.5 rounded-2xl bg-olive-500/20 text-olive-700 dark:text-olive-300">
                   <Star className="w-5 h-5" />
                 </div>
                 <div>
@@ -882,7 +882,7 @@ export function CssNectarShowcase({
                   <p className="text-[11px] text-slate-500">40.18 Trilioane km</p>
                 </div>
               </div>
-              <span className="text-xs font-black text-purple-600 dark:text-purple-400">
+              <span className="text-xs font-black text-olive-700 dark:text-olive-300">
                 4.25 a.l.
               </span>
             </div>
@@ -890,7 +890,7 @@ export function CssNectarShowcase({
             {/* Progress Bar */}
             <div className="w-full h-3 bg-olive-500/15 rounded-full overflow-hidden mb-3 p-0.5 border border-olive-500/30">
               <div
-                className="h-full bg-gradient-to-r from-purple-600 to-indigo-500 rounded-full transition-all duration-1000"
+                className="h-full bg-gradient-to-r from-olive-800 to-olive-500 rounded-full transition-all duration-1000"
                 style={{ width: "3%" }}
               />
             </div>

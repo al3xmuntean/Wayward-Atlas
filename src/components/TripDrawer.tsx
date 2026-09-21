@@ -196,8 +196,8 @@ export function TripDrawer({
               Vedere Generală Țară (Public)
             </span>
           ) : trip.isPrivate ? (
-            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-700/50">
-              <Lock className="w-3 h-3 text-purple-400" aria-hidden="true" />
+            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-olive-950/80 text-olive-300 border border-olive-700/50">
+              <Lock className="w-3 h-3 text-olive-400" aria-hidden="true" />
               Privat
             </span>
           ) : (
@@ -301,7 +301,7 @@ export function TripDrawer({
 
         {/* Gemini Achievement Report Card (if verified) */}
         {(report || trip.achievementReport) && (
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-cyan-950/40 border border-emerald-500/40 shadow-2xl space-y-3 animate-fade-in">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-olive-950/70 via-slate-900 to-olive-900/40 border border-olive-500/40 shadow-2xl space-y-3 animate-fade-in">
             {(() => {
               const activeReport = report || trip.achievementReport!;
               return (
@@ -465,7 +465,7 @@ export function TripDrawer({
                   {onOpenUploadForTrip && (
                     <button
                       onClick={() => onOpenUploadForTrip(trip)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs shadow-glow transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-olive-700 to-olive-600 hover:from-olive-600 hover:to-olive-500 text-white font-bold text-xs shadow-glow transition-all flex items-center justify-center gap-2"
                     >
                       <Camera className="w-4 h-4" />
                       <span>Încarcă Fotografii din Călătorie</span>
@@ -512,7 +512,7 @@ export function TripDrawer({
                         }
                       }}
                       disabled={isVerifying}
-                      className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-xs shadow-glow transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-olive-700 via-olive-600 to-olive-500 hover:from-olive-600 hover:to-olive-400 text-white font-bold text-xs shadow-glow transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {isVerifying ? (
                         <>
@@ -521,7 +521,7 @@ export function TripDrawer({
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-4 h-4 text-cyan-200 animate-pulse" />
+                          <Sparkles className="w-4 h-4 text-olive-200 animate-pulse" />
                           <span>✨ Verifică Realizările cu Gemini AI</span>
                         </>
                       )}
@@ -559,8 +559,8 @@ export function TripDrawer({
                   </span>
                 )}
                 {currentPhoto.hasPeople && (
-                  <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-purple-900/90 text-purple-200 border border-purple-500/40 backdrop-blur-md">
-                    <UserCheck className="w-3 h-3 text-purple-300" />
+                  <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-olive-900/90 text-olive-200 border border-olive-500/40 backdrop-blur-md">
+                    <UserCheck className="w-3 h-3 text-olive-300" />
                     Oameni detectați (AI)
                   </span>
                 )}
@@ -570,7 +570,7 @@ export function TripDrawer({
               <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-white flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+                    <MapPin className="w-3.5 h-3.5 text-olive-400" />
                     {currentPhoto.placeName || `${currentPhoto.city || ""}, ${currentPhoto.country || ""}`}
                   </h4>
                   <p className="text-[11px] text-slate-300">
@@ -588,7 +588,7 @@ export function TripDrawer({
                   <button
                     onClick={() => onFlyToPhoto(currentPhoto.latitude, currentPhoto.longitude)}
                     title="Apropie Globul de această locație"
-                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-cyan-500/80 hover:bg-cyan-400 text-slate-950 font-bold transition-all shadow-glow hover:scale-105"
+                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-olive-600 hover:bg-olive-500 text-white font-bold transition-all shadow-glow hover:scale-105"
                   >
                     <span>Zoom pe Glob</span>
                   </button>
@@ -598,9 +598,9 @@ export function TripDrawer({
 
             {/* Admin Photo Permissions Manager Bar */}
             {isAdmin && !trip.isCountryShowcase && (
-              <div className="p-3 rounded-2xl bg-slate-900/90 border border-cyan-500/30 space-y-2">
+              <div className="p-3 rounded-2xl bg-slate-900/90 border border-olive-500/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-[11px] font-bold text-olive-400 uppercase tracking-wider flex items-center gap-1">
                     <Shield className="w-3 h-3" />
                     Manager Permisiuni Poză (Admin)
                   </span>
@@ -631,7 +631,7 @@ export function TripDrawer({
                         disabled={updatingPhoto}
                         className={`text-[10px] py-1 px-1.5 rounded-md font-semibold border transition-all text-center ${
                           isSelected
-                            ? "bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-glow"
+                            ? "bg-olive-600 text-white font-bold border-olive-500 shadow-glow"
                             : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
                         }`}
                       >
@@ -650,13 +650,13 @@ export function TripDrawer({
             {currentPhoto.tags && currentPhoto.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <span className="text-xs text-slate-400 flex items-center gap-1 mr-1">
-                  <Sparkles className="w-3 h-3 text-cyan-400" /> Obiecte AI:
+                  <Sparkles className="w-3 h-3 text-olive-400" /> Obiecte AI:
                 </span>
                 {currentPhoto.tags.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => onTagClick && onTagClick(tag)}
-                    className="text-xs px-2 py-0.5 rounded-md bg-cyan-950/60 hover:bg-cyan-900/90 text-cyan-300 border border-cyan-800/40 transition-colors"
+                    className="text-xs px-2 py-0.5 rounded-md bg-olive-950/60 hover:bg-olive-900/90 text-olive-300 border border-olive-800/40 transition-colors"
                   >
                     #{tag}
                   </button>
@@ -686,7 +686,7 @@ export function TripDrawer({
                     aria-pressed={isSelected}
                     className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all group ${
                       isSelected
-                        ? "border-cyan-400 shadow-glow scale-95"
+                        ? "border-olive-500 shadow-glow scale-95"
                         : "border-slate-800 hover:border-slate-600 opacity-70 hover:opacity-100"
                     }`}
                   >
@@ -697,7 +697,7 @@ export function TripDrawer({
                       </div>
                     )}
                     {p.hasPeople && (
-                      <div className="absolute bottom-1 right-1 p-0.5 rounded-full bg-purple-900/90 text-purple-300">
+                      <div className="absolute bottom-1 right-1 p-0.5 rounded-full bg-olive-900/90 text-olive-300">
                         <UserCheck className="w-2.5 h-2.5" aria-hidden="true" />
                       </div>
                     )}
@@ -712,7 +712,7 @@ export function TripDrawer({
         {!trip.isCountryShowcase && (
           <div className="pt-4 border-t border-slate-800 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
+              <MessageSquare className="w-3.5 h-3.5 text-olive-400" aria-hidden="true" />
               Comentarii & Note ({trip.comments.length})
             </h3>
 
@@ -723,7 +723,7 @@ export function TripDrawer({
                 trip.comments.map((c) => (
                   <div key={c.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-cyan-300">{c.userName}</span>
+                      <span className="font-bold text-olive-300">{c.userName}</span>
                       <span className="text-slate-500">
                         {new Date(c.createdAt).toLocaleDateString("ro-RO", {
                           day: "numeric",
@@ -749,20 +749,20 @@ export function TripDrawer({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Scrie un mesaj sau o amintire..."
-                  className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
+                  className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-olive-500"
                 />
                 <button
                   type="submit"
                   aria-label="Trimite comentariul"
                   disabled={submittingComment || !newComment.trim()}
-                  className="px-3 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shadow-glow disabled:opacity-50"
+                  className="px-3 py-2 rounded-xl bg-olive-600 hover:bg-olive-500 text-white font-bold text-xs transition-all shadow-glow disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </form>
             ) : (
               <p className="text-[11px] text-slate-500 text-center py-2">
-                Conectează-te prin pagina <code className="text-cyan-400">/portal</code> pentru a lăsa un comentariu.
+                Conectează-te prin pagina <code className="text-olive-400">/portal</code> pentru a lăsa un comentariu.
               </p>
             )}
           </div>

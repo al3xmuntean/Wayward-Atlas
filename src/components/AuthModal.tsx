@@ -173,9 +173,9 @@ export function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModalProps) {
               type="button"
               aria-label="Autentificare demo ca Administrator Alex"
               onClick={() => quickLogin("admin@wayward.atlas", "admin123")}
-              className="flex items-center gap-1.5 py-1.5 px-2 rounded-xl bg-purple-100 dark:bg-purple-950/70 hover:bg-purple-200 dark:hover:bg-purple-900/90 text-purple-900 dark:text-purple-200 border border-purple-400/40 text-[11px] font-semibold transition-all hover:scale-[1.02] focus:ring-2 focus:ring-purple-400"
+              className="flex items-center gap-1.5 py-1.5 px-2 rounded-xl bg-olive-100 dark:bg-olive-950/70 hover:bg-olive-200 dark:hover:bg-olive-900/90 text-olive-900 dark:text-olive-200 border border-olive-500/40 text-[11px] font-semibold transition-all hover:scale-[1.02] focus:ring-2 focus:ring-olive-400"
             >
-              <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" aria-hidden="true" />
+              <Shield className="w-3.5 h-3.5 text-olive-700 dark:text-olive-400 shrink-0" aria-hidden="true" />
               <span className="truncate">Admin (Alex)</span>
             </button>
             <button

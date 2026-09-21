@@ -152,13 +152,13 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
           
           <!-- Tooltip on hover -->
           <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
-            <div class="glass-panel px-3 py-1.5 rounded-xl border ${isPlanned ? "border-emerald-500/60" : isCountry ? "border-amber-500/60" : "border-cyan-500/40"} text-center whitespace-nowrap shadow-2xl">
-              <span class="text-xs font-bold text-white block">${photo.placeName || trip.title}</span>
-              <span class="text-[10px] ${isPlanned ? "text-emerald-300 font-semibold" : isCountry ? "text-amber-300" : "text-cyan-300"} font-medium">
+            <div class="glass-panel px-3 py-1.5 rounded-xl border ${isPlanned ? "border-emerald-500/60" : isCountry ? "border-amber-500/60" : "border-olive-500/50"} text-center whitespace-nowrap shadow-2xl">
+              <span class="text-xs font-bold text-slate-900 dark:text-white block">${photo.placeName || trip.title}</span>
+              <span class="text-[10px] ${isPlanned ? "text-emerald-400 font-semibold" : isCountry ? "text-amber-400" : "text-olive-600 dark:text-olive-300"} font-medium">
                 ${tooltipSubtitle}
               </span>
             </div>
-            <div class="w-2 h-2 bg-slate-900 border-r border-b ${isPlanned ? "border-emerald-500/60" : isCountry ? "border-amber-500/60" : "border-cyan-500/40"} transform rotate-45 -mt-1"></div>
+            <div class="w-2 h-2 bg-slate-900 border-r border-b ${isPlanned ? "border-emerald-500/60" : isCountry ? "border-amber-500/60" : "border-olive-500/50"} transform rotate-45 -mt-1"></div>
           </div>
         </div>
       `;
@@ -207,7 +207,7 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
             }
           }}
           title="Resetare la vederea din orbită (Pământ 3D)"
-          className="p-3 glass-panel-glow rounded-2xl text-cyan-300 hover:text-white hover:bg-slate-800 transition-all hover:scale-105 shadow-glow"
+          className="p-3 glass-panel-glow rounded-2xl text-olive-700 dark:text-olive-300 hover:text-white hover:bg-olive-700 transition-all hover:scale-105 shadow-glow"
         >
           <RotateCcw className="w-5 h-5" />
         </button>
@@ -216,7 +216,7 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
         <button
           onClick={() => mapRef.current?.zoomIn({ duration: 600 })}
           title="Zoom In"
-          className="p-3 glass-panel rounded-2xl text-slate-300 hover:text-white hover:bg-slate-800 transition-all hover:scale-105"
+          className="p-3 glass-panel rounded-2xl text-slate-700 dark:text-slate-200 hover:text-white hover:bg-olive-700 transition-all hover:scale-105"
         >
           <ZoomIn className="w-5 h-5" />
         </button>
@@ -225,7 +225,7 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
         <button
           onClick={() => mapRef.current?.zoomOut({ duration: 600 })}
           title="Zoom Out"
-          className="p-3 glass-panel rounded-2xl text-slate-300 hover:text-white hover:bg-slate-800 transition-all hover:scale-105"
+          className="p-3 glass-panel rounded-2xl text-slate-700 dark:text-slate-200 hover:text-white hover:bg-olive-700 transition-all hover:scale-105"
         >
           <ZoomOut className="w-5 h-5" />
         </button>
@@ -234,7 +234,7 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
         <button
           onClick={() => setMapStyle((s) => (s === "dark" ? "voyager" : "dark"))}
           title={mapStyle === "dark" ? "Comută la harta detaliată" : "Comută la modul Dark Cosmic"}
-          className="p-3 glass-panel rounded-2xl text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all hover:scale-105"
+          className="p-3 glass-panel rounded-2xl text-slate-700 dark:text-slate-200 hover:text-olive-700 dark:hover:text-olive-300 hover:bg-olive-500/20 transition-all hover:scale-105"
         >
           <Layers className="w-5 h-5" />
         </button>

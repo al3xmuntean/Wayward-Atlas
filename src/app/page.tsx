@@ -422,8 +422,8 @@ export default function HomePage() {
               <span>Autentificat ca Viewer: Date complete, peisaje fără persoane</span>
             </div>
           ) : (
-            <div className="glass-panel px-4 py-1.5 rounded-full border border-purple-500/40 text-purple-900 dark:text-purple-200 text-xs font-semibold flex items-center gap-2 shadow-sm">
-              <Shield className="w-3.5 h-3.5 text-purple-500" />
+            <div className="glass-panel px-4 py-1.5 rounded-full border border-olive-600/40 text-olive-900 dark:text-olive-200 text-xs font-semibold flex items-center gap-2 shadow-sm bg-olive-500/10 dark:bg-olive-950/60">
+              <Shield className="w-3.5 h-3.5 text-olive-700 dark:text-olive-400" />
               <span>Mod Administrator (Alex): Acces total, Studio și Editare active</span>
             </div>
           )}
