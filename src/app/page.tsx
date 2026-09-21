@@ -546,81 +546,95 @@ export default function HomePage() {
       )}
 
       {/* Admin Photo Manager & Studio Modal */}
-      <UploadModal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        onTripCreated={() => {
-          fetchTrips();
-          if (viewMode === "sphere") {
-            globe3DRef.current?.resetView();
-          } else {
-            globeMapRef.current?.resetView();
-          }
-        }}
-      />
+      {isUploadOpen && (
+        <UploadModal
+          isOpen={isUploadOpen}
+          onClose={() => setIsUploadOpen(false)}
+          onTripCreated={() => {
+            fetchTrips();
+            if (viewMode === "sphere") {
+              globe3DRef.current?.resetView();
+            } else {
+              globeMapRef.current?.resetView();
+            }
+          }}
+        />
+      )}
 
       {/* Admin Users & Permissions Management Modal */}
-      <AdminUsersModal
-        isOpen={isUsersModalOpen}
-        onClose={() => setIsUsersModalOpen(false)}
-      />
+      {isUsersModalOpen && (
+        <AdminUsersModal
+          isOpen={isUsersModalOpen}
+          onClose={() => setIsUsersModalOpen(false)}
+        />
+      )}
 
       {/* Admin Edit Trip Modal */}
-      <EditTripModal
-        trip={editingTrip}
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setEditingTrip(null);
-        }}
-        onTripUpdated={handleTripUpdated}
-        onTripDeleted={(tripId) => {
-          handleDeleteTrip(tripId);
-          setIsEditModalOpen(false);
-          setEditingTrip(null);
-        }}
-      />
+      {isEditModalOpen && editingTrip && (
+        <EditTripModal
+          trip={editingTrip}
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingTrip(null);
+          }}
+          onTripUpdated={handleTripUpdated}
+          onTripDeleted={(tripId) => {
+            handleDeleteTrip(tripId);
+            setIsEditModalOpen(false);
+            setEditingTrip(null);
+          }}
+        />
+      )}
 
       {/* Persistent Auth Modal (Google OAuth & Roles) */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onLoginSuccess={(u) => {
-          setCurrentUser(u);
-          checkAuth();
-          fetchTrips();
-        }}
-      />
+      {isAuthModalOpen && (
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onLoginSuccess={(u) => {
+            setCurrentUser(u);
+            checkAuth();
+            fetchTrips();
+          }}
+        />
+      )}
 
       {/* Virtual Passport Modal (Official Travel Document & Stamps) */}
-      <VirtualPassportModal
-        isOpen={isPassportOpen}
-        onClose={() => setIsPassportOpen(false)}
-        trips={trips}
-        currentUser={currentUser}
-        onSelectCountry={(countryName) => {
-          setSearchQuery(countryName);
-          setIsPassportOpen(false);
-        }}
-      />
+      {isPassportOpen && (
+        <VirtualPassportModal
+          isOpen={isPassportOpen}
+          onClose={() => setIsPassportOpen(false)}
+          trips={trips}
+          currentUser={currentUser}
+          onSelectCountry={(countryName) => {
+            setSearchQuery(countryName);
+            setIsPassportOpen(false);
+          }}
+        />
+      )}
 
       {/* Atlas Wrapped Modal (Spotify-style Annual Retrospective) */}
-      <AtlasWrappedModal
-        isOpen={isWrappedOpen}
-        onClose={() => setIsWrappedOpen(false)}
-        trips={trips}
-        currentUser={currentUser}
-      />
+      {isWrappedOpen && (
+        <AtlasWrappedModal
+          isOpen={isWrappedOpen}
+          onClose={() => setIsWrappedOpen(false)}
+          trips={trips}
+          currentUser={currentUser}
+        />
+      )}
 
       {/* Access Restricted Modal for Unauthorized Deep-Links */}
-      <AccessRestrictedModal
-        isOpen={accessModalState.isOpen}
-        onClose={() => setAccessModalState((prev) => ({ ...prev, isOpen: false }))}
-        onOpenLogin={() => setIsAuthModalOpen(true)}
-        errorCode={accessModalState.errorCode}
-        requiredRole={accessModalState.requiredRole}
-        itemTitle={accessModalState.itemTitle}
-      />
+      {accessModalState.isOpen && (
+        <AccessRestrictedModal
+          isOpen={accessModalState.isOpen}
+          onClose={() => setAccessModalState((prev) => ({ ...prev, isOpen: false }))}
+          onOpenLogin={() => setIsAuthModalOpen(true)}
+          errorCode={accessModalState.errorCode}
+          requiredRole={accessModalState.requiredRole}
+          itemTitle={accessModalState.itemTitle}
+        />
+      )}
     </main>
   );
 }

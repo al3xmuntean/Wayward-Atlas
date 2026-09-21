@@ -61,7 +61,7 @@ export const AccessRestrictedModal: React.FC<AccessRestrictedModalProps> = ({
           <button
             onClick={onClose}
             aria-label={t("common.close")}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -111,7 +111,7 @@ export const AccessRestrictedModal: React.FC<AccessRestrictedModalProps> = ({
           )}
           <button
             onClick={onClose}
-            className={`py-2.5 px-4 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-all ${
+            className={`py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all ${
               isAuthRequired ? "" : "flex-1"
             }`}
           >

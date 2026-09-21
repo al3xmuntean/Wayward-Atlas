@@ -181,39 +181,39 @@ export function TripDrawer({
       <div className="w-12 h-1.5 bg-olive-500/40 rounded-full mx-auto sm:hidden mt-2.5 mb-0.5 shrink-0" aria-hidden="true" />
 
       {/* Header */}
-      <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-olive-500/20 bg-slate-900/40">
+      <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-olive-500/20 bg-slate-100/70 dark:bg-slate-900/40">
         <div className="flex flex-wrap items-center gap-1.5">
           {trip.status === "PLANNED" ? (
-            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-olive-950/80 text-olive-300 border border-olive-500/50 shadow-sm">
-              <Sparkles className="w-3 h-3 text-olive-400" aria-hidden="true" />
+            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-olive-100 dark:bg-olive-950/80 text-olive-800 dark:text-olive-300 border border-olive-300 dark:border-olive-500/50 shadow-xs">
+              <Sparkles className="w-3 h-3 text-olive-600 dark:text-olive-400" aria-hidden="true" />
               Planificat (Travel Assist)
             </span>
           ) : trip.isCountryShowcase ? (
-            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-700/50">
-              <Star className="w-3 h-3 text-amber-400 fill-amber-400" aria-hidden="true" />
+            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50">
+              <Star className="w-3 h-3 text-amber-500 fill-amber-500" aria-hidden="true" />
               Vedere Generală Țară (Public)
             </span>
           ) : trip.isPrivate ? (
-            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-olive-950/80 text-olive-300 border border-olive-700/50">
-              <Lock className="w-3 h-3 text-olive-400" aria-hidden="true" />
+            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-olive-100 dark:bg-olive-950/80 text-olive-800 dark:text-olive-300 border border-olive-300 dark:border-olive-700/50">
+              <Lock className="w-3 h-3 text-olive-600 dark:text-olive-400" aria-hidden="true" />
               Privat
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-olive-950/80 text-olive-300 border border-olive-700/50">
-              <Globe2 className="w-3 h-3 text-olive-400" aria-hidden="true" />
+            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-olive-100 dark:bg-olive-950/80 text-olive-800 dark:text-olive-300 border border-olive-300 dark:border-olive-700/50">
+              <Globe2 className="w-3 h-3 text-olive-600 dark:text-olive-400" aria-hidden="true" />
               Călătorie
             </span>
           )}
 
           {trip.withPartner && (
-            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-950/80 text-rose-300 border border-rose-700/50">
-              <Heart className="w-3 h-3 text-rose-400 fill-rose-400/30" aria-hidden="true" />
+            <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700/50">
+              <Heart className="w-3 h-3 text-rose-500 fill-rose-500/30" aria-hidden="true" />
               Călătorie în Doi
             </span>
           )}
 
-          <span className="text-xs text-slate-400 flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-olive-400" aria-hidden="true" />
+          <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+            <Calendar className="w-3 h-3 text-olive-600 dark:text-olive-400" aria-hidden="true" />
             {formattedDate}
           </span>
         </div>
@@ -225,7 +225,7 @@ export function TripDrawer({
               onClick={() => onEditTrip(trip)}
               aria-label={`Editează călătoria ${trip.title}`}
               title="Editează călătoria"
-              className="p-1.5 text-slate-400 hover:text-olive-300 rounded-lg hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-olive-500"
+              className="p-1.5 text-slate-500 hover:text-olive-700 dark:text-slate-400 dark:hover:text-olive-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-olive-500"
             >
               <Edit className="w-4 h-4" aria-hidden="true" />
             </button>
@@ -241,7 +241,7 @@ export function TripDrawer({
               }}
               aria-label={`Șterge călătoria ${trip.title}`}
               title="Șterge călătoria"
-              className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-rose-500"
+              className="p-1.5 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-rose-500"
             >
               <Trash2 className="w-4 h-4" aria-hidden="true" />
             </button>
@@ -252,10 +252,10 @@ export function TripDrawer({
             onClick={handleShareTrip}
             aria-label={t("common.share")}
             title={copiedShare ? t("common.copied") : t("drawer.shareTrip")}
-            className="p-1.5 text-slate-400 hover:text-olive-300 rounded-lg hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-olive-500 relative"
+            className="p-1.5 text-slate-500 hover:text-olive-700 dark:text-slate-400 dark:hover:text-olive-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-olive-500 relative"
           >
             {copiedShare ? (
-              <Check className="w-4 h-4 text-olive-400" aria-hidden="true" />
+              <Check className="w-4 h-4 text-olive-600 dark:text-olive-400" aria-hidden="true" />
             ) : (
               <Share2 className="w-4 h-4" aria-hidden="true" />
             )}
@@ -264,7 +264,7 @@ export function TripDrawer({
           <button
             onClick={onClose}
             aria-label={t("common.close")}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-olive-500"
+            className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-olive-500"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -275,9 +275,9 @@ export function TripDrawer({
       <div className="flex-1 overflow-y-auto p-5 space-y-5">
         {/* Title and description */}
         <div>
-          <h2 id="trip-drawer-title" className="text-2xl font-black tracking-tight text-white">{localizedTrip.title}</h2>
+          <h2 id="trip-drawer-title" className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">{localizedTrip.title}</h2>
           {localizedTrip.description && (
-            <p className="mt-2 text-sm text-slate-300 leading-relaxed bg-slate-950/40 p-3 rounded-xl border border-slate-800">
+            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-100 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
               {localizedTrip.description}
             </p>
           )}
@@ -370,28 +370,28 @@ export function TripDrawer({
 
         {/* Travel Plan Itinerary & Checkpoints (if trip.planData) */}
         {trip.planData && (
-          <div className="p-4 rounded-2xl bg-slate-900/90 border border-emerald-500/30 space-y-3 animate-fade-in">
+          <div className="p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-emerald-500/30 space-y-3 animate-fade-in shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                 <Compass className="w-4 h-4" />
                 Planul Călătoriei ({trip.planData.days} Zile)
               </span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-500/40 text-emerald-300">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300">
                 {trip.planData.style}
               </span>
             </div>
 
             {/* Weather & Tips (if present) */}
             {trip.planData.weatherForecastSummary && (
-              <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-800/40 space-y-1">
-                <div className="flex items-center justify-between text-xs font-bold text-amber-300">
+              <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 space-y-1">
+                <div className="flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300">
                   <span className="flex items-center gap-1.5">
-                    <CloudSun className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
+                    <CloudSun className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" aria-hidden="true" />
                     Climat & Vreme:
                   </span>
                   <span>{trip.planData.weatherForecastSummary.tempRange}</span>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed italic">
+                <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed italic">
                   {trip.planData.weatherForecastSummary.description}
                 </p>
               </div>
@@ -400,16 +400,16 @@ export function TripDrawer({
             {/* Target Checkpoints */}
             {trip.planData.allTargetCheckpoints && (
               <div className="space-y-1.5">
-                <span className="text-[11px] font-semibold text-slate-300 block">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block">
                   Checklist Obiective Țintă:
                 </span>
                 <div className="grid grid-cols-1 gap-1.5">
                   {trip.planData.allTargetCheckpoints.map((cp, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-200"
+                      className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                       <span>{cp}</span>
                     </div>
                   ))}
@@ -420,9 +420,9 @@ export function TripDrawer({
             {/* Packing Checklist in TripDrawer */}
             {trip.planData.packingList && trip.planData.packingList.length > 0 && (
               <div className="space-y-1.5 pt-1">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                   <span className="flex items-center gap-1.5">
-                    <Luggage className="w-3.5 h-3.5 text-olive-400" aria-hidden="true" />
+                    <Luggage className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" aria-hidden="true" />
                     Bagaje ({trip.planData.packingList.filter(p => p.checked).length}/{trip.planData.packingList.length}):
                   </span>
                 </div>
@@ -432,19 +432,19 @@ export function TripDrawer({
                       key={item.id}
                       className={`flex items-center justify-between p-2 rounded-xl border text-xs ${
                         item.checked
-                          ? "bg-olive-950/40 border-olive-800/50 text-slate-400 line-through"
-                          : "bg-slate-950/70 border-slate-800 text-slate-200"
+                          ? "bg-olive-50 dark:bg-olive-950/40 border-olive-200 dark:border-olive-800/50 text-slate-400 dark:text-slate-500 line-through"
+                          : "bg-slate-50 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200"
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         {item.checked ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-olive-400 shrink-0" aria-hidden="true" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400 shrink-0" aria-hidden="true" />
                         ) : (
-                          <div className="w-3.5 h-3.5 rounded border border-slate-600 shrink-0" />
+                          <div className="w-3.5 h-3.5 rounded border border-slate-400 dark:border-slate-600 shrink-0" />
                         )}
                         <span>{item.item}</span>
                       </div>
-                      <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                      <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400">
                         {item.category}
                       </span>
                     </div>
@@ -596,9 +596,9 @@ export function TripDrawer({
 
             {/* Admin Photo Permissions Manager Bar */}
             {isAdmin && !trip.isCountryShowcase && (
-              <div className="p-3 rounded-2xl bg-slate-900/90 border border-olive-500/30 space-y-2">
+              <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-900/90 border border-olive-500/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-olive-400 uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-[11px] font-bold text-olive-700 dark:text-olive-400 uppercase tracking-wider flex items-center gap-1">
                     <Shield className="w-3 h-3" />
                     Manager Permisiuni Poză (Admin)
                   </span>
@@ -610,7 +610,7 @@ export function TripDrawer({
                     className={`flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg font-bold border transition-all ${
                       currentPhoto.isCountryCover
                         ? "bg-amber-500 border-amber-400 text-slate-950 shadow-glow"
-                        : "bg-slate-950 border-slate-700 text-slate-300 hover:text-white"
+                        : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
                     <Star className={`w-3 h-3 ${currentPhoto.isCountryCover ? "fill-slate-950" : ""}`} />
@@ -629,8 +629,8 @@ export function TripDrawer({
                         disabled={updatingPhoto}
                         className={`text-[10px] py-1 px-1.5 rounded-md font-semibold border transition-all text-center ${
                           isSelected
-                            ? "bg-olive-600 text-white font-bold border-olive-500 shadow-glow"
-                            : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                            ? "bg-olive-700 dark:bg-olive-600 text-white font-bold border-olive-600 shadow-glow"
+                            : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         }`}
                       >
                         {r === "VIEWER" && "Viewer"}
@@ -647,14 +647,14 @@ export function TripDrawer({
             {/* AI Tags on current photo */}
             {currentPhoto.tags && currentPhoto.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">
-                <span className="text-xs text-slate-400 flex items-center gap-1 mr-1">
-                  <Sparkles className="w-3 h-3 text-olive-400" /> Obiecte AI:
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mr-1">
+                  <Sparkles className="w-3 h-3 text-olive-600 dark:text-olive-400" /> Obiecte AI:
                 </span>
                 {currentPhoto.tags.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => onTagClick && onTagClick(tag)}
-                    className="text-xs px-2 py-0.5 rounded-md bg-olive-950/60 hover:bg-olive-900/90 text-olive-300 border border-olive-800/40 transition-colors"
+                    className="text-xs px-2 py-0.5 rounded-md bg-olive-100 dark:bg-olive-950/60 hover:bg-olive-200 dark:hover:bg-olive-900/90 text-olive-800 dark:text-olive-300 border border-olive-300 dark:border-olive-800/40 transition-colors"
                   >
                     #{tag}
                   </button>
@@ -667,7 +667,7 @@ export function TripDrawer({
         {/* Thumbnails list if multiple photos */}
         {trip.photos.length > 1 && (
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
               Fotografii din călătorie ({trip.photos.length})
             </h3>
             <div className="grid grid-cols-4 gap-2">
@@ -685,7 +685,7 @@ export function TripDrawer({
                     className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all group ${
                       isSelected
                         ? "border-olive-500 shadow-glow scale-95"
-                        : "border-slate-800 hover:border-slate-600 opacity-70 hover:opacity-100"
+                        : "border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 opacity-70 hover:opacity-100"
                     }`}
                   >
                     <img src={p.thumbnailUrl || p.url} alt="" className="w-full h-full object-cover" />
@@ -708,9 +708,9 @@ export function TripDrawer({
 
         {/* Comments Section (Disabled in Public Country Mode) */}
         {!trip.isCountryShowcase && (
-          <div className="pt-4 border-t border-slate-800 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5 text-olive-400" aria-hidden="true" />
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" aria-hidden="true" />
               Comentarii & Note ({trip.comments.length})
             </h3>
 
@@ -719,17 +719,17 @@ export function TripDrawer({
                 <p className="text-xs text-slate-500 italic">Nu există comentarii încă.</p>
               ) : (
                 trip.comments.map((c) => (
-                  <div key={c.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+                  <div key={c.id} className="p-3 rounded-xl bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-olive-300">{c.userName}</span>
-                      <span className="text-slate-500">
+                      <span className="font-bold text-olive-700 dark:text-olive-300">{c.userName}</span>
+                      <span className="text-slate-500 dark:text-slate-400">
                         {new Date(c.createdAt).toLocaleDateString("ro-RO", {
                           day: "numeric",
                           month: "short",
                         })}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300">{c.content}</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-300">{c.content}</p>
                   </div>
                 ))
               )}
@@ -747,20 +747,20 @@ export function TripDrawer({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Scrie un mesaj sau o amintire..."
-                  className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-olive-500"
+                  className="flex-1 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-olive-500"
                 />
                 <button
                   type="submit"
                   aria-label="Trimite comentariul"
                   disabled={submittingComment || !newComment.trim()}
-                  className="px-3 py-2 rounded-xl bg-olive-600 hover:bg-olive-500 text-white font-bold text-xs transition-all shadow-glow disabled:opacity-50"
+                  className="px-3 py-2 rounded-xl bg-olive-700 hover:bg-olive-800 dark:bg-olive-600 dark:hover:bg-olive-500 text-white font-bold text-xs transition-all shadow-glow disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </form>
             ) : (
               <p className="text-[11px] text-slate-500 text-center py-2">
-                Conectează-te prin pagina <code className="text-olive-400">/portal</code> pentru a lăsa un comentariu.
+                Conectează-te prin pagina <code className="text-olive-700 dark:text-olive-400">/portal</code> pentru a lăsa un comentariu.
               </p>
             )}
           </div>

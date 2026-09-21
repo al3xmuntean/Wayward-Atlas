@@ -554,6 +554,8 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
 
   const currentActive = photos[activePhotoIdx];
 
+  if (!isOpen) return null;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in pointer-events-auto overflow-y-auto"
@@ -572,13 +574,13 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
         <button
           onClick={onClose}
           aria-label="Închide fereastra de încărcare"
-          className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors z-20 focus:ring-2 focus:ring-olive-500"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors z-20 focus:ring-2 focus:ring-olive-500"
         >
           <X className="w-5 h-5" aria-hidden="true" />
         </button>
 
         <div className="mb-5 sm:mb-6 pr-8">
-          <div className="flex items-center gap-2 text-olive-600 dark:text-olive-400 mb-1">
+          <div className="flex items-center gap-2 text-olive-700 dark:text-olive-400 mb-1">
             <Sparkles className="w-5 h-5" aria-hidden="true" />
             <span className="text-xs font-bold uppercase tracking-wider">Admin Photo Manager & Studio</span>
           </div>
@@ -595,46 +597,46 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
           {/* Trip Dates */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-300 mb-1.5 block">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 block">
                 {t("admin.tripStartDate")}
               </label>
-              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-olive-500">
-                <Calendar className="w-4 h-4 text-olive-400 mr-2 shrink-0" />
+              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus-within:border-olive-500">
+                <Calendar className="w-4 h-4 text-olive-600 dark:text-olive-400 mr-2 shrink-0" />
                 <input
                   type="date"
                   required
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent text-sm text-slate-200 focus:outline-none w-full [color-scheme:dark]"
+                  className="bg-transparent text-sm text-slate-900 dark:text-slate-200 focus:outline-none w-full [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-300 mb-1.5 block">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 block">
                 {t("admin.tripEndDate")}
               </label>
-              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus-within:border-olive-500">
-                <Calendar className="w-4 h-4 text-slate-500 mr-2 shrink-0" />
+              <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus-within:border-olive-500">
+                <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500 mr-2 shrink-0" />
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent text-sm text-slate-200 focus:outline-none w-full [color-scheme:dark]"
+                  className="bg-transparent text-sm text-slate-900 dark:text-slate-200 focus:outline-none w-full [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
           </div>
 
           {/* Multilingual Title & Description Studio */}
-          <div className="rounded-2xl bg-slate-950/70 border border-olive-500/25 p-4 space-y-4 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+          <div className="rounded-2xl bg-slate-100/90 dark:bg-slate-950/70 border border-slate-200 dark:border-olive-500/25 p-4 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800/80">
               <div>
-                <div className="flex items-center gap-2 text-olive-400 font-bold text-xs uppercase tracking-wider">
+                <div className="flex items-center gap-2 text-olive-700 dark:text-olive-400 font-bold text-xs uppercase tracking-wider">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>{t("admin.translationsTitle")}</span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                   Româna este limba principală. Traducerile în EN, DE, ES, FR pot fi generate automat cu AI și editate manual.
                 </p>
               </div>
@@ -644,7 +646,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                 type="button"
                 onClick={() => handleAiTranslate()}
                 disabled={!title.trim() || translatingLang !== null}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-olive-600 hover:bg-olive-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-olive-700 hover:bg-olive-800 dark:bg-olive-600 dark:hover:bg-olive-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shrink-0"
               >
                 {translatingLang === "all" ? (
                   <>
@@ -661,14 +663,14 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
             </div>
 
             {translateStatus && (
-              <div className="p-2.5 rounded-xl bg-olive-950/60 border border-olive-500/40 text-xs text-olive-200 flex items-center gap-2 animate-fade-in">
-                <CheckCircle2 className="w-4 h-4 text-olive-400 shrink-0" />
+              <div className="p-2.5 rounded-xl bg-olive-100 dark:bg-olive-950/60 border border-olive-300 dark:border-olive-500/40 text-xs text-olive-900 dark:text-olive-200 flex items-center gap-2 animate-fade-in">
+                <CheckCircle2 className="w-4 h-4 text-olive-600 dark:text-olive-400 shrink-0" />
                 <span>{translateStatus}</span>
               </div>
             )}
 
             {/* Language Tabs */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl border border-slate-800">
+            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-200/80 dark:bg-slate-900/90 rounded-xl border border-slate-300 dark:border-slate-800">
               {(["ro", "en", "de", "es", "fr"] as Language[]).map((lang) => {
                 const isActive = activeLangTab === lang;
                 const hasContent =
@@ -683,8 +685,8 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                     onClick={() => setActiveLangTab(lang)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       isActive
-                        ? "bg-olive-600/30 text-olive-200 border border-olive-500/40 shadow-xs"
-                        : "text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent"
+                        ? "bg-white dark:bg-olive-600/30 text-olive-900 dark:text-olive-200 border border-olive-500/40 shadow-xs font-bold"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 border border-transparent"
                     }`}
                   >
                     <FlagIcon code={lang} className="w-4 h-2.5 rounded-xs" />
@@ -696,7 +698,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                       {lang === "fr" && "Français"}
                     </span>
                     {hasContent && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-olive-400 ml-0.5" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-olive-500 ml-0.5" />
                     )}
                   </button>
                 );
@@ -708,10 +710,10 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
               <div className="space-y-3 pt-1">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-slate-200 block">
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                       Titlul călătoriei (Română - Principal) *
                     </label>
-                    <span className="text-[10px] text-olive-400 font-semibold uppercase">Limba Bază</span>
+                    <span className="text-[10px] text-olive-700 dark:text-olive-400 font-semibold uppercase">Limba Bază</span>
                   </div>
                   <input
                     type="text"
@@ -719,12 +721,12 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="ex: Turul Japoniei: Kyoto & Tokyo"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-olive-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-200 mb-1.5 block">
+                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 block">
                     Descriere Călătorie (Română)
                   </label>
                   <textarea
@@ -732,7 +734,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Câteva cuvinte despre traseu, atmosferă și locurile explorate..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-olive-500 resize-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500 resize-none"
                   />
                 </div>
               </div>
@@ -741,7 +743,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FlagIcon code={activeLangTab} className="w-4 h-3 rounded-xs" />
-                    <span className="text-xs font-bold text-slate-200">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                       Versiunea în {activeLangTab.toUpperCase()}
                     </span>
                   </div>
@@ -749,7 +751,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                     type="button"
                     onClick={() => handleAiTranslate(activeLangTab)}
                     disabled={!title.trim() || translatingLang !== null}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-olive-300 hover:text-olive-200 text-xs font-medium border border-olive-500/30 transition-all disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-olive-800 dark:text-olive-300 text-xs font-semibold border border-olive-500/30 transition-all disabled:opacity-40"
                   >
                     {translatingLang === activeLangTab ? (
                       <>
@@ -758,7 +760,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-3 h-3 text-olive-400" />
+                        <Sparkles className="w-3 h-3 text-olive-600 dark:text-olive-400" />
                         <span>Traduce doar {activeLangTab.toUpperCase()} cu AI</span>
                       </>
                     )}
@@ -766,7 +768,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-200 mb-1.5 block">
+                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 block">
                     Titlu Călătorie ({activeLangTab.toUpperCase()})
                   </label>
                   <input
@@ -782,12 +784,12 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                       }))
                     }
                     placeholder={`Titlul tradus în ${activeLangTab.toUpperCase()}...`}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-olive-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-200 mb-1.5 block">
+                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 block">
                     Descriere Călătorie ({activeLangTab.toUpperCase()})
                   </label>
                   <textarea
@@ -803,9 +805,9 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                       }))
                     }
                     placeholder={`Descrierea tradusă în ${activeLangTab.toUpperCase()}...`}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-olive-500 resize-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500 resize-none"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                     Poți edita sau corecta oricând această traducere manual.
                   </p>
                 </div>
@@ -816,20 +818,20 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
           {/* Partner & Privacy Configuration */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Traveled with Partner Box */}
-            <div className="p-4 rounded-2xl bg-rose-950/20 border border-rose-900/40 space-y-3">
+            <div className="p-4 rounded-2xl bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />
+                  <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
                   <div>
-                    <span className="text-xs font-bold text-rose-200 block">Călătorie în Doi (cu Partenerul)</span>
-                    <span className="text-[11px] text-rose-300/70">Deblochează amintirile speciale pentru Partener</span>
+                    <span className="text-xs font-bold text-rose-950 dark:text-rose-200 block">Călătorie în Doi (cu Partenerul)</span>
+                    <span className="text-[11px] text-rose-700/80 dark:text-rose-300/70">Deblochează amintirile speciale pentru Partener</span>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setWithPartner(!withPartner)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    withPartner ? "bg-rose-500" : "bg-slate-800"
+                    withPartner ? "bg-rose-500" : "bg-slate-300 dark:bg-slate-800"
                   }`}
                 >
                   <span
@@ -842,7 +844,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
 
               {withPartner && (
                 <div className="animate-fade-in pt-1">
-                  <label className="text-[11px] font-semibold text-rose-300 mb-1 block">
+                  <label className="text-[11px] font-bold text-rose-900 dark:text-rose-300 mb-1 block">
                     Notițe & Detalii Secrete pentru Partener:
                   </label>
                   <textarea
@@ -850,17 +852,17 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                     value={partnerNotes}
                     onChange={(e) => setPartnerNotes(e.target.value)}
                     placeholder="Amintiri, momente amuzante sau detalii romantice vizibile doar de voi doi..."
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-rose-800/40 text-xs text-rose-100 placeholder-rose-900/60 focus:outline-none focus:border-rose-400 resize-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-950/80 border border-rose-300 dark:border-rose-800/40 text-xs text-rose-950 dark:text-rose-100 placeholder:text-rose-400 dark:placeholder:text-rose-900/60 focus:outline-none focus:border-rose-400 resize-none"
                   />
                 </div>
               )}
             </div>
 
             {/* General Trip Visibility */}
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+            <div className="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-bold text-white block mb-1">Nivel Minim de Acces Călătorie</span>
-                <p className="text-[11px] text-slate-400 mb-3">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block mb-1">Nivel Minim de Acces Călătorie</span>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-3">
                   Determină cine poate descoperi acest album pe hartă.
                 </p>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -871,8 +873,8 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                       onClick={() => setTripMinRole(r)}
                       className={`py-1.5 px-2 rounded-xl text-[11px] font-semibold border transition-all text-center ${
                         tripMinRole === r
-                          ? "bg-olive-500/20 border-olive-400 text-olive-200 shadow-glow"
-                          : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                          ? "bg-olive-700 border-olive-500 text-white shadow-sm font-bold"
+                          : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60"
                       }`}
                     >
                       {r === "VIEWER" && "Viewer"}
@@ -889,15 +891,15 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
           {/* Photo Dropzone */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-slate-300 block">Fotografii din călătorie *</label>
-              <span className="text-xs text-slate-400">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Fotografii din călătorie *</label>
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 {photos.length} {photos.length === 1 ? "poză adăugată" : "poze adăugate"}
               </span>
             </div>
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-700 hover:border-olive-500 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-slate-950/50 hover:bg-slate-900/50"
+              className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-olive-500 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-950/50 hover:bg-slate-100 dark:hover:bg-slate-900/50"
             >
               <input
                 ref={fileInputRef}
@@ -907,9 +909,9 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                 onChange={(e) => handleFilesSelected(e.target.files)}
                 className="hidden"
               />
-              <Upload className="w-8 h-8 text-olive-400 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-200">Trage fotografiile aici sau apasă pentru a alege</p>
-              <p className="text-xs text-slate-500 mt-1">
+              <Upload className="w-8 h-8 text-olive-600 dark:text-olive-400 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Trage fotografiile aici sau apasă pentru a alege</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Extracție automată GPS EXIF • Detectare AI persoane & cuplu • Sugestii automate de permisiuni
               </p>
             </div>
@@ -917,9 +919,9 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
 
           {/* Photo Review & Adjustment Studio */}
           {photos.length > 0 && currentActive && (
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-xs font-bold text-olive-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-xs font-bold text-olive-700 dark:text-olive-400 uppercase tracking-wider flex items-center gap-1.5">
                   <ImageIcon className="w-3.5 h-3.5" />
                   Inspectare & Confirmare ({activePhotoIdx + 1} din {photos.length})
                 </span>
@@ -932,14 +934,14 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                       onClick={() => setActivePhotoIdx(idx)}
                       className={`w-7 h-7 shrink-0 rounded-lg text-xs font-bold transition-all border ${
                         idx === activePhotoIdx
-                          ? "bg-olive-600 border-olive-400 text-white shadow-sm"
+                          ? "bg-olive-700 border-olive-500 text-white shadow-sm"
                           : p.isCountryCover
-                          ? "bg-amber-950 border-amber-600 text-amber-300"
+                          ? "bg-amber-100 dark:bg-amber-950 border-amber-500 text-amber-900 dark:text-amber-300"
                           : p.minRole === "PARTNER"
-                          ? "bg-rose-950 border-rose-600 text-rose-300"
+                          ? "bg-rose-100 dark:bg-rose-950 border-rose-500 text-rose-900 dark:text-rose-300"
                           : p.hasPeople
-                          ? "bg-olive-950 border-olive-600 text-olive-300"
-                          : "bg-slate-800 border-slate-700 text-slate-300 hover:text-white"
+                          ? "bg-olive-100 dark:bg-olive-950 border-olive-500 text-olive-900 dark:text-olive-300"
+                          : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                       }`}
                     >
                       {idx + 1}
@@ -950,7 +952,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                 {/* Thumbnail Preview */}
-                <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-950 border border-slate-800 shadow-lg">
+                <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-200 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 shadow-md">
                   <img src={currentActive.previewUrl} alt="" className="w-full h-full object-cover" />
                   {currentActive.scanningAi && (
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center gap-1 text-olive-400">
@@ -980,7 +982,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                 <div className="md:col-span-2 space-y-3">
                   {/* Role Selector for this Photo */}
                   <div>
-                    <label className="text-xs font-bold text-slate-300 mb-1.5 block">
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 block">
                       Permisiune Vizibilitate pentru această Poză:
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -993,11 +995,11 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                         }}
                         className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-semibold border transition-all ${
                           currentActive.minRole === "VIEWER"
-                            ? "bg-olive-600/30 border-olive-400 text-olive-200 shadow-sm"
-                            : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                            ? "bg-olive-700 border-olive-500 text-white shadow-sm font-bold"
+                            : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         }`}
                       >
-                        <Eye className="w-3 h-3 text-olive-400" />
+                        <Eye className="w-3 h-3" />
                         <span>Viewer</span>
                       </button>
 
@@ -1010,11 +1012,11 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                         }}
                         className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-semibold border transition-all ${
                           currentActive.minRole === "CLOSE_FRIEND"
-                            ? "bg-amber-500/20 border-amber-400 text-amber-200 shadow-glow"
-                            : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                            ? "bg-amber-600 border-amber-500 text-white shadow-sm font-bold"
+                            : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         }`}
                       >
-                        <Star className="w-3 h-3 text-amber-400" />
+                        <Star className="w-3 h-3" />
                         <span>Prieten</span>
                       </button>
 
@@ -1027,11 +1029,11 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                         }}
                         className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-semibold border transition-all ${
                           currentActive.minRole === "PARTNER"
-                            ? "bg-rose-500/20 border-rose-400 text-rose-200 shadow-glow"
-                            : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                            ? "bg-rose-600 border-rose-500 text-white shadow-sm font-bold"
+                            : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         }`}
                       >
-                        <Heart className="w-3 h-3 text-rose-400" />
+                        <Heart className="w-3 h-3" />
                         <span>Partener</span>
                       </button>
 
@@ -1044,23 +1046,23 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                         }}
                         className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-semibold border transition-all ${
                           currentActive.minRole === "ADMIN"
-                            ? "bg-olive-500/20 border-olive-400 text-olive-200 shadow-glow"
-                            : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                            ? "bg-olive-800 border-olive-600 text-white shadow-sm font-bold"
+                            : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         }`}
                       >
-                        <Shield className="w-3 h-3 text-olive-400" />
+                        <Shield className="w-3 h-3" />
                         <span>Doar Admin</span>
                       </button>
                     </div>
                   </div>
 
                   {/* Country Cover Toggle Button */}
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-2 text-xs">
-                      <Star className={`w-4 h-4 ${currentActive.isCountryCover ? "text-amber-400 fill-amber-400" : "text-slate-500"}`} />
+                      <Star className={`w-4 h-4 ${currentActive.isCountryCover ? "text-amber-500 fill-amber-500" : "text-slate-400"}`} />
                       <div>
-                        <span className="font-semibold text-slate-200 block">Poză Oficială de Țară (Public Mode)</span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 block">Poză Oficială de Țară (Public Mode)</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           {currentActive.isCountryCover
                             ? "Această fotografie va reprezenta țara pe glob pentru vizitatorii publici."
                             : "Setează această fotografie ca singura poză reprezentativă pentru această țară."}
@@ -1076,8 +1078,8 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                       }}
                       className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all ${
                         currentActive.isCountryCover
-                          ? "bg-amber-500 text-slate-950 shadow-glow"
-                          : "bg-slate-800 text-slate-300 hover:text-white"
+                          ? "bg-amber-500 text-slate-950 shadow-sm"
+                          : "bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300"
                       }`}
                     >
                       {currentActive.isCountryCover ? "✓ Poză Setată" : "Setează ca Poză Oficială"}
@@ -1085,15 +1087,15 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                   </div>
 
                   {/* Location Confirmation & Manual Adjustment */}
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                    <span className="text-xs font-bold text-olive-400 block flex items-center gap-1.5">
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
+                    <span className="text-xs font-bold text-olive-700 dark:text-olive-400 block flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5" />
                       Locație Geografică (Confirmă sau Ajustează):
                     </span>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Obiectiv / Nume Punct</label>
+                        <label className="text-[10px] text-slate-600 dark:text-slate-400 block mb-0.5 font-medium">Obiectiv / Nume Punct</label>
                         <input
                           type="text"
                           value={currentActive.placeName}
@@ -1104,11 +1106,11 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: Turnul Eiffel"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Oraș</label>
+                        <label className="text-[10px] text-slate-600 dark:text-slate-400 block mb-0.5 font-medium">Oraș</label>
                         <input
                           type="text"
                           value={currentActive.city}
@@ -1119,11 +1121,11 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: Paris"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Țară</label>
+                        <label className="text-[10px] text-slate-600 dark:text-slate-400 block mb-0.5 font-medium">Țară</label>
                         <input
                           type="text"
                           value={currentActive.country}
@@ -1134,14 +1136,14 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: Franța"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Latitudine</label>
+                        <label className="text-[10px] text-slate-600 dark:text-slate-400 block mb-0.5 font-medium">Latitudine</label>
                         <input
                           type="number"
                           step="any"
@@ -1153,11 +1155,11 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: 48.8584"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Longitudine</label>
+                        <label className="text-[10px] text-slate-600 dark:text-slate-400 block mb-0.5 font-medium">Longitudine</label>
                         <input
                           type="number"
                           step="any"
@@ -1169,15 +1171,15 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                             );
                           }}
                           placeholder="ex: 2.2945"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500"
                         />
                       </div>
                     </div>
 
                     {/* AI Location Suggestions if available */}
                     {currentActive.aiSuggestions.length > 0 && (
-                      <div className="pt-2 border-t border-slate-800">
-                        <span className="text-[10px] font-bold text-amber-400 block mb-1">
+                      <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 block mb-1">
                           Sugestii Detectate de AI (Apasă pentru a aplica instant):
                         </span>
                         <div className="flex flex-wrap gap-1.5">
@@ -1186,9 +1188,9 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                               key={idx}
                               type="button"
                               onClick={() => applyLocationSuggestion(sug)}
-                              className="text-[11px] px-2.5 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900/80 border border-amber-700/60 text-amber-200 transition-all flex items-center gap-1"
+                              className="text-[11px] px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/80 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 transition-all flex items-center gap-1"
                             >
-                              <MapPin className="w-3 h-3 text-amber-400" />
+                              <MapPin className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                               <span>{sug.placeName} ({sug.city ? `${sug.city}, ` : ""}{sug.country})</span>
                             </button>
                           ))}
@@ -1204,13 +1206,13 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
                           value={manualSearchQuery}
                           onChange={(e) => setManualSearchQuery(e.target.value)}
                           placeholder="Caută oraș sau obiectiv turistic..."
-                          className="flex-1 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-olive-500"
+                          className="flex-1 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-olive-500"
                         />
                         <button
                           type="button"
                           onClick={handleManualSearch}
                           disabled={manualSearching}
-                          className="px-3 py-1 rounded-lg bg-olive-600 hover:bg-olive-500 text-white text-xs font-bold transition-all flex items-center gap-1"
+                          className="px-3 py-1 rounded-lg bg-olive-700 hover:bg-olive-800 dark:bg-olive-600 dark:hover:bg-olive-500 text-white text-xs font-bold transition-all flex items-center gap-1"
                         >
                           {manualSearching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
                           <span>Caută</span>
@@ -1224,14 +1226,14 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
           )}
 
           {/* Submit & Progress */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             {uploadProgress ? (
-              <div className="flex items-center gap-2 text-olive-400 text-xs font-semibold">
+              <div className="flex items-center gap-2 text-olive-700 dark:text-olive-400 text-xs font-semibold">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>{uploadProgress}</span>
               </div>
             ) : (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 Toate fotografiile vor fi salvate local și catalogate automat pe Glob.
               </span>
             )}
@@ -1240,7 +1242,7 @@ export function UploadModal({ isOpen, onClose, onTripCreated }: UploadModalProps
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-all text-center"
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white text-xs font-semibold transition-all text-center"
               >
                 Anulează
               </button>
