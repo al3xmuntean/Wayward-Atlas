@@ -8,7 +8,23 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Calibri", "Candara", "Segoe UI", "Optima", "Arial", "sans-serif"],
+      },
       colors: {
+        olive: {
+          50: "#f6f8f2",
+          100: "#ebf0e2",
+          200: "#d7e2c5",
+          300: "#b9cca0",
+          400: "#9ab379",
+          500: "#7d9957",
+          600: "#627c40",
+          700: "#556b2f",
+          800: "#3f4e2c",
+          900: "#2d3a18",
+          950: "#141a0e",
+        },
         background: "var(--background)",
         foreground: "var(--foreground)",
         border: "hsl(var(--border))",
@@ -35,7 +51,8 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        glow: "0 0 25px -5px rgba(59, 130, 246, 0.5)",
+        glow: "0 0 25px -5px rgba(107, 142, 35, 0.45)",
+        "glow-olive": "0 0 30px -5px rgba(125, 153, 87, 0.45)",
         "glow-cyan": "0 0 30px -5px rgba(6, 182, 212, 0.4)",
       },
     },

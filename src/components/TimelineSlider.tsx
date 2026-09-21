@@ -83,6 +83,8 @@ export function TimelineSlider({
         {/* Play / Pause Auto-Tour Button */}
         <button
           onClick={() => setIsPlaying(!isPlaying)}
+          aria-label={isPlaying ? "Pauză tur cronologic" : "Pornește turul cronologic al globului"}
+          aria-pressed={isPlaying}
           title={isPlaying ? "Pauză tur cronologic" : "Pornește turul cronologic al globului"}
           className={`p-2 rounded-xl text-white transition-all ${
             isPlaying
@@ -90,7 +92,7 @@ export function TimelineSlider({
               : "bg-slate-800/80 hover:bg-slate-700 text-cyan-300"
           }`}
         >
-          {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+          {isPlaying ? <Pause className="w-4 h-4 fill-current" aria-hidden="true" /> : <Play className="w-4 h-4 fill-current ml-0.5" aria-hidden="true" />}
         </button>
 
         {/* All Years Tab */}
@@ -100,6 +102,8 @@ export function TimelineSlider({
             onSelectMonth(null);
             setIsPlaying(false);
           }}
+          aria-label="Afișează toate călătoriile"
+          aria-pressed={selectedYear === null}
           className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
             selectedYear === null
               ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-glow"
@@ -109,10 +113,10 @@ export function TimelineSlider({
           Toate Călătoriile
         </button>
 
-        <div className="w-px h-5 bg-slate-700/60 mx-1" />
+        <div className="w-px h-5 bg-slate-700/60 mx-1" aria-hidden="true" />
 
         {/* Year Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto max-w-[60vw] py-0.5 no-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto max-w-[60vw] py-0.5 no-scrollbar" role="group" aria-label="Filtrare după an">
           {years.map((year) => {
             const isSelected = selectedYear === year;
             return (
@@ -123,6 +127,8 @@ export function TimelineSlider({
                   onSelectMonth(null);
                   setIsPlaying(false);
                 }}
+                aria-label={`Filtrează călătoriile din anul ${year}`}
+                aria-pressed={isSelected}
                 className={`group relative px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                   isSelected
                     ? "bg-cyan-500 text-slate-950 shadow-glow scale-105"
@@ -131,7 +137,7 @@ export function TimelineSlider({
               >
                 <span>{year}</span>
                 {isSelected && (
-                  <span className="absolute -top-1 right-1 w-1.5 h-1.5 rounded-full bg-white ring-1 ring-cyan-300" />
+                  <span className="absolute -top-1 right-1 w-1.5 h-1.5 rounded-full bg-white ring-1 ring-cyan-300" aria-hidden="true" />
                 )}
               </button>
             );

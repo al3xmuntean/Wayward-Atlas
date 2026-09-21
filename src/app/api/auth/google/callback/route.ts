@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
           email,
           name,
           passwordHash: "oauth-google-managed-user",
-          role: "USER", // Default role
+          role: "VIEWER", // Default role in 5-tier RBAC system
           canViewPrivate: false,
         },
       });

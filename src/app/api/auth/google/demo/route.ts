@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
         email: demoEmail,
         name: demoName,
         passwordHash: "oauth-google-managed-user",
-        role: "USER",
+        role: "VIEWER",
         canViewPrivate: false,
       },
     });

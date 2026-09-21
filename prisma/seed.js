@@ -4,9 +4,9 @@ const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("Seeding database with multi-role accounts and test trips...");
 
-  // Clean existing data
+  // Clean existing tables
   await prisma.comment.deleteMany({});
   await prisma.tripAccess.deleteMany({});
   await prisma.photo.deleteMany({});
@@ -14,36 +14,70 @@ async function main() {
   await prisma.user.deleteMany({});
 
   const adminPasswordHash = await bcrypt.hash("admin123", 10);
-  const userPasswordHash = await bcrypt.hash("user123", 10);
+  const partnerPasswordHash = await bcrypt.hash("partner123", 10);
+  const friendPasswordHash = await bcrypt.hash("friend123", 10);
+  const viewerPasswordHash = await bcrypt.hash("viewer123", 10);
 
+  // 1. Admin account
   const admin = await prisma.user.create({
     data: {
       email: "admin@wayward.atlas",
-      name: "Alex Explorer (Admin)",
+      name: "Alex (Admin)",
       passwordHash: adminPasswordHash,
       role: "ADMIN",
+      canViewPrivate: true,
     },
   });
 
-  const registeredUser = await prisma.user.create({
+  // 2. Partner account
+  const partner = await prisma.user.create({
     data: {
-      email: "traveler@companion.com",
-      name: "Elena C.",
-      passwordHash: userPasswordHash,
-      role: "USER",
+      email: "partner@wayward.atlas",
+      name: "Partener",
+      passwordHash: partnerPasswordHash,
+      role: "PARTNER",
+      canViewPrivate: true,
     },
   });
 
-  console.log(`Created admin: ${admin.email} and user: ${registeredUser.email}`);
+  // 3. Close Friend account
+  const friend = await prisma.user.create({
+    data: {
+      email: "friend@wayward.atlas",
+      name: "Radu (Close Friend)",
+      passwordHash: friendPasswordHash,
+      role: "CLOSE_FRIEND",
+      canViewPrivate: false,
+    },
+  });
 
-  // Trip 1: 2021 - Alpii Elvețieni
+  // 4. Viewer account
+  const viewer = await prisma.user.create({
+    data: {
+      email: "viewer@wayward.atlas",
+      name: "Elena (Viewer)",
+      passwordHash: viewerPasswordHash,
+      role: "VIEWER",
+      canViewPrivate: false,
+    },
+  });
+
+  console.log("Created 4 test accounts:");
+  console.log(`- ADMIN: ${admin.email} (pass: admin123)`);
+  console.log(`- PARTNER: ${partner.email} (pass: partner123)`);
+  console.log(`- CLOSE_FRIEND: ${friend.email} (pass: friend123)`);
+  console.log(`- VIEWER: ${viewer.email} (pass: viewer123)`);
+
+  // --- TRIP 1: 2021 - Switzerland ---
   const trip2021 = await prisma.trip.create({
     data: {
       title: "Expediție în Alpii Elvețieni",
-      description: "Trekking spectaculos în jurul masivului Matterhorn și văile din Zermatt.",
+      description: "Trekking spectaculos în jurul masivului Matterhorn și văile alpine din Zermatt.",
       startDate: new Date("2021-07-15T09:30:00Z"),
       endDate: new Date("2021-07-22T18:00:00Z"),
       isPrivate: false,
+      minRole: "VIEWER",
+      withPartner: false,
       createdById: admin.id,
       photos: {
         create: [
@@ -58,6 +92,8 @@ async function main() {
             takenAt: new Date("2021-07-16T14:20:00Z"),
             hasPeople: false,
             isPrivate: false,
+            minRole: "PUBLIC",
+            isCountryCover: true, // Single designated showcase image for Switzerland in Public mode
             tags: JSON.stringify(["munte", "zăpadă", "peisaj", "trekking", "alpi"]),
           },
           {
@@ -71,6 +107,8 @@ async function main() {
             takenAt: new Date("2021-07-18T10:15:00Z"),
             hasPeople: false,
             isPrivate: false,
+            minRole: "VIEWER",
+            isCountryCover: false,
             tags: JSON.stringify(["lac", "munte", "natură", "reflexie"]),
           },
         ],
@@ -78,7 +116,7 @@ async function main() {
     },
   });
 
-  // Trip 2: 2022 - Italia: Roma & Coasta Amalfi
+  // --- TRIP 2: 2022 - Italy: Rome & Amalfi ---
   const trip2022 = await prisma.trip.create({
     data: {
       title: "Vacanță pe Coasta Amalfi & Roma",
@@ -86,6 +124,8 @@ async function main() {
       startDate: new Date("2022-09-05T08:00:00Z"),
       endDate: new Date("2022-09-14T20:00:00Z"),
       isPrivate: false,
+      minRole: "VIEWER",
+      withPartner: false,
       createdById: admin.id,
       photos: {
         create: [
@@ -100,6 +140,8 @@ async function main() {
             takenAt: new Date("2022-09-06T15:45:00Z"),
             hasPeople: false,
             isPrivate: false,
+            minRole: "PUBLIC",
+            isCountryCover: true, // Single designated showcase image for Italy in Public mode
             tags: JSON.stringify(["arhitectură", "istorie", "monument", "oraș", "colosseum"]),
           },
           {
@@ -107,20 +149,22 @@ async function main() {
             thumbnailUrl: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=400&q=80",
             latitude: 40.6281,
             longitude: 14.485,
-            placeName: "Vedere spre Positano",
+            placeName: "Positano pe Faleză",
             city: "Positano",
             country: "Italia",
             takenAt: new Date("2022-09-10T18:30:00Z"),
-            hasPeople: true, // Photo with person -> private
-            isPrivate: true,
-            tags: JSON.stringify(["plajă", "mare", "apus", "persoană", "coastă", "oraș"]),
+            hasPeople: true, // Photo with people -> visible only to CLOSE_FRIEND, PARTNER, ADMIN
+            isPrivate: false,
+            minRole: "CLOSE_FRIEND",
+            isCountryCover: false,
+            tags: JSON.stringify(["plajă", "mare", "apus", "oameni", "coastă", "prieteni"]),
           },
         ],
       },
     },
   });
 
-  // Trip 3: 2023 - Japonia: Tokyo & Kyoto
+  // --- TRIP 3: 2023 - Japan: Tokyo & Kyoto ---
   const trip2023 = await prisma.trip.create({
     data: {
       title: "Explorare Japonia: Tokyo, Kyoto & Muntele Fuji",
@@ -128,21 +172,25 @@ async function main() {
       startDate: new Date("2023-04-10T12:00:00Z"),
       endDate: new Date("2023-04-24T22:00:00Z"),
       isPrivate: false,
+      minRole: "VIEWER",
+      withPartner: false,
       createdById: admin.id,
       photos: {
         create: [
           {
-            url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
-            thumbnailUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=400&q=80",
-            latitude: 35.0116,
-            longitude: 135.7681,
-            placeName: "Templu tradițional în Kyoto",
-            city: "Kyoto",
+            url: "https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=1200&q=80",
+            thumbnailUrl: "https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=400&q=80",
+            latitude: 35.3606,
+            longitude: 138.7274,
+            placeName: "Muntele Fuji & Cireși Înfloriți",
+            city: "Fujikawaguchiko",
             country: "Japonia",
-            takenAt: new Date("2023-04-14T11:00:00Z"),
+            takenAt: new Date("2023-04-20T08:30:00Z"),
             hasPeople: false,
             isPrivate: false,
-            tags: JSON.stringify(["templu", "istorie", "grădină", "arhitectură", "zen"]),
+            minRole: "PUBLIC",
+            isCountryCover: true, // Single designated showcase image for Japan in Public mode
+            tags: JSON.stringify(["munte", "fuji", "cireși", "natură", "primăvară"]),
           },
           {
             url: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
@@ -155,42 +203,42 @@ async function main() {
             takenAt: new Date("2023-04-18T19:15:00Z"),
             hasPeople: false,
             isPrivate: false,
+            minRole: "VIEWER",
+            isCountryCover: false,
             tags: JSON.stringify(["turn", "oraș", "noapte", "apus", "lumini"]),
           },
           {
-            url: "https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=1200&q=80",
-            thumbnailUrl: "https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=400&q=80",
-            latitude: 35.3606,
-            longitude: 138.7274,
-            placeName: "Muntele Fuji & Cireși Înfloriți",
-            city: "Fujikawaguchiko",
+            url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
+            thumbnailUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=400&q=80",
+            latitude: 35.0116,
+            longitude: 135.7681,
+            placeName: "Templu tradițional în Kyoto",
+            city: "Kyoto",
             country: "Japonia",
-            takenAt: new Date("2023-04-20T08:30:00Z"),
-            hasPeople: false,
+            takenAt: new Date("2023-04-14T11:00:00Z"),
+            hasPeople: true, // Photo with person -> visible only to CLOSE_FRIEND, PARTNER, ADMIN
             isPrivate: false,
-            tags: JSON.stringify(["munte", "fuji", "cireși", "natură", "primăvară"]),
+            minRole: "CLOSE_FRIEND",
+            isCountryCover: false,
+            tags: JSON.stringify(["templu", "istorie", "grădină", "persoană", "kimono"]),
           },
         ],
       },
     },
   });
 
-  // Trip 4: 2024 - Grecia: Santorini & Insulele Ciclade (Trip privat partajat cu Elena)
+  // --- TRIP 4: 2024 - Greece: Santorini (Partner Exclusive Trip) ---
   const trip2024 = await prisma.trip.create({
     data: {
-      title: "Santorini & Ciclade în Familie",
-      description: "Apusuri de neuitat în Oia, case albe cu cupole albastre și croazieră pe caldera.",
+      title: "Santorini & Ciclade în Doi",
+      description: "Apusuri de neuitat în Oia, străduțe albe și croazieră romantică pe caldera la apus.",
       startDate: new Date("2024-06-01T10:00:00Z"),
       endDate: new Date("2024-06-09T18:00:00Z"),
       isPrivate: true,
+      minRole: "PARTNER", // Visible only to PARTNER & ADMIN
+      withPartner: true, // Marked as done together with partner
+      partnerNotes: "Călătoria noastră de aniversare. Cina la lumina lumânărilor pe faleza din Oia și degustarea de vinuri la apus în Pyrgos au fost amintiri magice de neuitat!",
       createdById: admin.id,
-      allowedUsers: {
-        create: [
-          {
-            userId: registeredUser.id,
-          },
-        ],
-      },
       photos: {
         create: [
           {
@@ -198,21 +246,24 @@ async function main() {
             thumbnailUrl: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=400&q=80",
             latitude: 36.4618,
             longitude: 25.3753,
-            placeName: "Oia & Cupolele Albastre",
+            placeName: "Oia & Cupolele Albastre la Apus",
             city: "Oia",
             country: "Grecia",
             takenAt: new Date("2024-06-03T19:40:00Z"),
-            hasPeople: false,
+            hasPeople: true,
             isPrivate: true,
-            tags: JSON.stringify(["apus", "mare", "insulă", "arhitectură", "grecia"]),
+            minRole: "PARTNER",
+            isCountryCover: false,
+            partnerPreselected: true,
+            tags: JSON.stringify(["apus", "mare", "insulă", "romantic", "cuplu", "grecia"]),
           },
         ],
       },
       comments: {
         create: [
           {
-            userId: registeredUser.id,
-            content: "Apusul din Oia a fost absolut magic! Mă bucur că am împărtășit această călătorie!",
+            userId: partner.id,
+            content: "A fost cea mai frumoasă călătorie a noastră! Mă bucur nespus de fiecare moment trăit împreună.",
             createdAt: new Date("2024-06-04T10:30:00Z"),
           },
         ],
@@ -220,17 +271,17 @@ async function main() {
     },
   });
 
-  // Add comment on public trip
+  // Comments
   await prisma.comment.create({
     data: {
       tripId: trip2023.id,
-      userId: registeredUser.id,
+      userId: viewer.id,
       content: "Poza cu Muntele Fuji este incredibilă! Arată ca o pictură.",
       createdAt: new Date("2023-04-25T14:00:00Z"),
     },
   });
 
-  console.log("Seeding completed successfully with 4 multi-year trips, photos, tags, comments, and permissions!");
+  console.log("Database seeded successfully with all 5 role tiers and test data!");
 }
 
 main()

@@ -11,6 +11,7 @@ services:
       - DATABASE_URL=file:/app/prisma/dev.db
       - JWT_SECRET=wayward-atlas-production-secret-replace-me-12345
       - LOCAL_AI_URL=http://host.docker.internal:1234/v1
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - NEXT_PUBLIC_APP_NAME=Wayward Atlas
     volumes:
       # Persistent SQLite database volume

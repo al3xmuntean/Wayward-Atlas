@@ -1,22 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser, canViewTrip } from "@/lib/auth";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+
+const MAX_COMMENT_LENGTH = 1000;
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Trebuie să fii autentificat pentru a lăsa un comentariu" }, { status: 401 });
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit("comment", clientIp, 20, 60000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Comment rate limit exceeded. Please retry in ${rateLimit.resetInSeconds} seconds.` },
+        { status: 429 }
+      );
+    }
+
+    const { user, errorResponse } = await requireUser();
+    if (errorResponse) {
+      return errorResponse;
     }
 
     const { id: tripId } = await params;
-    const { content } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { content } = body;
 
-    if (!content || !content.trim()) {
-      return NextResponse.json({ error: "Comentariul nu poate fi gol" }, { status: 400 });
+    if (!content || typeof content !== "string" || !content.trim()) {
+      return NextResponse.json({ error: "Comment content cannot be empty" }, { status: 400 });
+    }
+
+    const trimmedContent = content.trim();
+    if (trimmedContent.length > MAX_COMMENT_LENGTH) {
+      return NextResponse.json(
+        { error: `Comment exceeds maximum allowed length of ${MAX_COMMENT_LENGTH} characters.` },
+        { status: 400 }
+      );
     }
 
     // Verify trip exists and user has view permission
@@ -26,21 +47,21 @@ export async function POST(
     });
 
     if (!trip) {
-      return NextResponse.json({ error: "Călătoria nu a fost găsită" }, { status: 404 });
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    if (trip.isPrivate && user.role !== "ADMIN" && trip.createdById !== user.id) {
-      const isAllowed = trip.allowedUsers.some((au) => au.userId === user.id);
-      if (!isAllowed) {
-        return NextResponse.json({ error: "Nu ai permisiunea de a comenta la această călătorie privată" }, { status: 403 });
-      }
+    if (!canViewTrip(trip, user)) {
+      return NextResponse.json(
+        { error: "You do not have permission to comment on this private trip" },
+        { status: 403 }
+      );
     }
 
     const comment = await prisma.comment.create({
       data: {
         tripId,
         userId: user.id,
-        content: content.trim(),
+        content: trimmedContent,
       },
       include: {
         user: { select: { id: true, name: true } },
@@ -48,6 +69,7 @@ export async function POST(
     });
 
     return NextResponse.json({
+      success: true,
       comment: {
         id: comment.id,
         tripId: comment.tripId,
@@ -59,6 +81,6 @@ export async function POST(
     });
   } catch (error) {
     console.error("Create comment error:", error);
-    return NextResponse.json({ error: "Eroare la adăugarea comentariului" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to post comment" }, { status: 500 });
   }
 }

@@ -76,13 +76,27 @@ Open your browser at **`http://localhost:3000`**.
 To log in, visit the private route:
 👉 **`http://localhost:3000/portal`**
 
-| Role | Email | Password | Permissions |
+| Role | Email | Password | Permissions & Visibility |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@wayward.atlas` | `admin123` | Upload trips, toggle privacy, manage users & roles, delete |
-| **User** | `traveler@companion.com` | `user123` | View public + shared private trips, post comments |
-| **Guest / Viewer** | *(No login required)* | — | Read-only view of public trips, dates masked to year only |
+| **Admin** | `admin@wayward.atlas` | `admin123` | Superuser: full access, Studio upload & review, user roles management, travel planning & verification |
+| **Partner** | `partner@wayward.atlas` | `partner123` | Amintiri în doi, private couple memories & notes, planned trips pin & Travel Assist |
+| **Close Friend** | `friend@wayward.atlas` | `friend123` | Can view trips with human photos (`hasPeople: true`) + landscapes |
+| **Viewer** | `viewer@wayward.atlas` | `viewer123` | Full day/month details, but STRICTLY landscape/architecture only (no human photos) |
+| **Public** | *(No login)* | — | Aggregated country-level pins, 1 official showcase image per country, masked year dates |
 
 ---
+
+## ✈️ Travel Assist — AI Journey Planner & Verification (Google Gemini)
+
+- **AI Itinerary & Checkpoints Planner**:
+  - Enter any destination, duration (1-21 days), timeframe, and travel style.
+  - Powered by **Google Gemini AI** (or fallback local LLM / heuristics), generates day-by-day itineraries and a curated list of target checkpoints (monuments, scenic viewpoints, authentic experiences).
+  - Special partner recommendations and romantic spots when traveling with a partner.
+- **Planned Pins on 3D Globe**:
+  - Visible exclusively to **Admin** and **Partner** with a distinctive emerald/teal floating pin.
+- **Post-Trip Photo Verification & Memories**:
+  - After traveling, upload photos to the planned trip.
+  - One-click **"Verifică cu Gemini AI"**: Gemini inspects the uploaded photos against the planned checkpoints, scores achievements, highlights surprise spontaneous discoveries, and drafts an evocative travel memory story celebrating the journey!
 
 ## 🌐 Google OAuth Configuration (Optional)
 

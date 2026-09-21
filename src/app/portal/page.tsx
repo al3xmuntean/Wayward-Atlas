@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, User, Shield, ArrowLeft, Sparkles, Globe } from "lucide-react";
+import { Lock, Mail, User, Shield, ArrowLeft, Sparkles, Globe, Heart, Star, Eye } from "lucide-react";
 import Link from "next/link";
 
 export default function PortalPage() {
@@ -31,13 +31,13 @@ export default function PortalPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "A apărut o eroare la autentificare");
+        throw new Error(data.error || "Authentication error occurred");
       }
 
       router.push("/");
       router.refresh();
     } catch (err: any) {
-      setError(err.message || "Eroare la autentificare");
+      setError(err.message || "Authentication error occurred");
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,7 @@ export default function PortalPage() {
         body: JSON.stringify({ email: demoEmail, password: demoPass }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Eroare");
+      if (!res.ok) throw new Error(data.error || "Login failed");
       router.push("/");
       router.refresh();
     } catch (err: any) {
@@ -74,28 +74,95 @@ export default function PortalPage() {
         className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 rounded-2xl glass-panel text-slate-300 hover:text-white border-slate-700/60 hover:border-cyan-500/50 transition-all text-xs font-semibold"
       >
         <ArrowLeft className="w-4 h-4 text-cyan-400" />
-        <span>Înapoi la Globul 3D</span>
+        <span>Înapoi la Globul 3D (Public)</span>
       </Link>
 
-      <div className="w-full max-w-md glass-panel-glow rounded-3xl p-8 border border-cyan-500/30 shadow-2xl relative z-10 animate-fade-in">
-        {/* Brand header */}
+      <div className="w-full max-w-lg glass-panel-glow rounded-3xl p-7 sm:p-8 border border-olive-500/30 shadow-2xl relative z-10 animate-fade-in">
+        {/* Brand header - Pure typography, NO logo */}
         <div className="text-center mb-6">
-          <div className="inline-flex p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 mb-3 shadow-glow">
-            <Globe className="w-7 h-7 animate-spin-slow" />
-          </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Portal Privat — Wayward Atlas</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            <span className="text-olive-400">Wayward</span> Atlas
+          </h1>
+          <p className="text-xs text-olive-300/80 font-bold uppercase tracking-wider mt-1">Portal Privat de Autentificare</p>
           <p className="text-xs text-slate-400 mt-1">
-            Acces rezervat administratorului și prietenilor autorizați.
+            Acces securizat pe bază de roluri: Administrator, Partener, Prieteni Apropiați și Vizitatori.
           </p>
+        </div>
+
+        {/* 1-Click Multi-Role Test Grid */}
+        <div className="mb-6 p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800">
+          <span className="text-[11px] font-bold text-olive-400 uppercase tracking-wider block mb-2.5 text-center">
+            ⚡ Autentificare Rapidă pe Roluri (Test cu 1 Click):
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            {/* 1. Admin */}
+            <button
+              type="button"
+              onClick={() => quickLogin("admin@wayward.atlas", "admin123")}
+              className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-950/70 hover:bg-purple-900/90 text-purple-200 border border-purple-600/40 text-xs font-semibold transition-all hover:scale-[1.02] text-left"
+            >
+              <div className="p-1 rounded-lg bg-purple-900/60 text-purple-400 shrink-0">
+                <Shield className="w-4 h-4" />
+              </div>
+              <div className="overflow-hidden">
+                <span className="block font-bold text-white truncate">Admin (Alex)</span>
+                <span className="text-[10px] text-purple-300 block truncate">Acces Total & Studio</span>
+              </div>
+            </button>
+
+            {/* 2. Partner */}
+            <button
+              type="button"
+              onClick={() => quickLogin("partner@wayward.atlas", "partner123")}
+              className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-950/70 hover:bg-rose-900/90 text-rose-200 border border-rose-600/40 text-xs font-semibold transition-all hover:scale-[1.02] text-left"
+            >
+              <div className="p-1 rounded-lg bg-rose-900/60 text-rose-400 shrink-0">
+                <Heart className="w-4 h-4" />
+              </div>
+              <div className="overflow-hidden">
+                <span className="block font-bold text-white truncate">Partener</span>
+                <span className="text-[10px] text-rose-300 block truncate">Călătorii în Doi & Privat</span>
+              </div>
+            </button>
+
+            {/* 3. Close Friend */}
+            <button
+              type="button"
+              onClick={() => quickLogin("friend@wayward.atlas", "friend123")}
+              className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-950/70 hover:bg-amber-900/90 text-amber-200 border border-amber-600/40 text-xs font-semibold transition-all hover:scale-[1.02] text-left"
+            >
+              <div className="p-1 rounded-lg bg-amber-900/60 text-amber-400 shrink-0">
+                <Star className="w-4 h-4" />
+              </div>
+              <div className="overflow-hidden">
+                <span className="block font-bold text-white truncate">Prieten (Radu)</span>
+                <span className="text-[10px] text-amber-300 block truncate">Vede Poze cu Oameni</span>
+              </div>
+            </button>
+
+            {/* 4. Viewer */}
+            <button
+              type="button"
+              onClick={() => quickLogin("viewer@wayward.atlas", "viewer123")}
+              className="flex items-center gap-2 p-2.5 rounded-xl bg-cyan-950/70 hover:bg-cyan-900/90 text-cyan-200 border border-cyan-600/40 text-xs font-semibold transition-all hover:scale-[1.02] text-left"
+            >
+              <div className="p-1 rounded-lg bg-cyan-900/60 text-cyan-400 shrink-0">
+                <Eye className="w-4 h-4" />
+              </div>
+              <div className="overflow-hidden">
+                <span className="block font-bold text-white truncate">Viewer (Elena)</span>
+                <span className="text-[10px] text-cyan-300 block truncate">Date Complete / Fără Oameni</span>
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Google Sign-in Button */}
         <div className="mb-5">
           <a
             href="/api/auth/google"
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm transition-all shadow-md hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs sm:text-sm transition-all shadow-md hover:scale-[1.01] active:scale-[0.99]"
           >
-            {/* Google SVG Icon */}
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -119,35 +186,10 @@ export default function PortalPage() {
 
           <div className="flex items-center my-4">
             <div className="flex-1 border-t border-slate-800" />
-            <span className="px-3 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+            <span className="px-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
               sau cu email și parolă
             </span>
             <div className="flex-1 border-t border-slate-800" />
-          </div>
-        </div>
-
-        {/* Quick Demo Logins */}
-        <div className="mb-5 p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2 text-center">
-            ⚡ Autentificare Rapidă (Test):
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => quickLogin("admin@wayward.atlas", "admin123")}
-              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-purple-950/70 hover:bg-purple-900/90 text-purple-200 border border-purple-600/40 text-xs font-semibold transition-all hover:scale-[1.02]"
-            >
-              <Shield className="w-3.5 h-3.5 text-purple-400" />
-              <span>Admin (Alex)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => quickLogin("traveler@companion.com", "user123")}
-              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-cyan-950/70 hover:bg-cyan-900/90 text-cyan-200 border border-cyan-600/40 text-xs font-semibold transition-all hover:scale-[1.02]"
-            >
-              <User className="w-3.5 h-3.5 text-cyan-400" />
-              <span>User (Elena)</span>
-            </button>
           </div>
         </div>
 
@@ -158,7 +200,7 @@ export default function PortalPage() {
         )}
 
         {/* Email & Password Form */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {isRegister && (
             <div>
               <label className="text-xs font-medium text-slate-300 mb-1 block">Nume complet</label>
@@ -169,7 +211,7 @@ export default function PortalPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="ex: Mihai Ionescu"
+                  placeholder="ex: Andrei Popescu"
                   className="bg-transparent text-sm text-slate-200 placeholder-slate-500 focus:outline-none w-full"
                 />
               </div>
@@ -209,13 +251,13 @@ export default function PortalPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm transition-all shadow-glow hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm transition-all shadow-glow hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
           >
             {loading ? "Se procesează..." : isRegister ? "Înregistrare" : "Conectare"}
           </button>
         </form>
 
-        <div className="mt-5 text-center">
+        <div className="mt-4 text-center">
           <button
             type="button"
             onClick={() => {

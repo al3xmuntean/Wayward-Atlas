@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } f
 import maplibregl from "maplibre-gl";
 import { Compass, RotateCcw, Layers, ZoomIn, ZoomOut, Sparkles } from "lucide-react";
 import { TripData, PhotoData } from "@/lib/types";
+import { useTheme } from "@/lib/theme";
 
 export interface GlobeMapRef {
   flyToLocation: (lat: number, lon: number, zoom?: number) => void;
@@ -24,16 +25,24 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
   { trips, filteredPhotos, onSelectPhoto, selectedPhoto },
   ref
 ) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
-  const [mapStyle, setMapStyle] = useState<"dark" | "voyager">("dark");
+  const [mapStyle, setMapStyle] = useState<"dark" | "voyager">(isLight ? "voyager" : "dark");
   const [isGlobeLoaded, setIsGlobeLoaded] = useState(false);
+
+  // Sync internal mapStyle when user toggles global theme
+  useEffect(() => {
+    setMapStyle(resolvedTheme === "light" ? "voyager" : "dark");
+  }, [resolvedTheme]);
 
   // Initialize MapLibre with 3D Globe projection
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
+    const initialStyle = resolvedTheme === "light" ? CARTO_VOYAGER : CARTO_DARK;
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: mapStyle === "dark" ? CARTO_DARK : CARTO_VOYAGER,
@@ -103,27 +112,53 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
       if (typeof photo.latitude !== "number" || typeof photo.longitude !== "number") return;
 
       const isSelected = selectedPhoto?.id === photo.id;
+      const isPlanned = trip.status === "PLANNED";
+      const isCountry = Boolean(trip.isCountryShowcase || photo.isCountryCover);
+      const isPartner = Boolean(trip.withPartner || photo.minRole === "PARTNER");
+      const pinClass = isPlanned
+        ? "planned-marker"
+        : isCountry
+        ? "country-marker"
+        : isPartner
+        ? "partner-marker"
+        : photo.isPrivate
+        ? "private-marker"
+        : "";
 
       // Create custom HTML element for marker
       const el = document.createElement("div");
       el.className = "wayward-marker group";
 
+      const tooltipSubtitle = isPlanned
+        ? "Planificat • Travel Assist (AI)"
+        : isCountry
+        ? `Vedere Țară • Anul ${trip.year}`
+        : trip.isMaskedDate
+        ? `Anul ${trip.year}`
+        : new Date(photo.takenAt).toLocaleDateString("ro-RO");
+
+      const innerIconHtml = isPlanned && (!photo.url || photo.url.startsWith("/planned"))
+        ? `<div class="w-6 h-6 flex items-center justify-center text-white" style="transform: rotate(45deg);">
+             <svg class="w-3.5 h-3.5 text-emerald-100 fill-emerald-100" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+           </div>`
+        : `<img src="${photo.thumbnailUrl || photo.url}" alt="" class="marker-inner-img" />`;
+
       el.innerHTML = `
         <div class="relative">
-          <div class="marker-pin ${photo.isPrivate ? "private-marker" : ""}">
-            <img src="${photo.thumbnailUrl || photo.url}" alt="" class="marker-inner-img" />
+          <div class="marker-pin ${pinClass}">
+            ${innerIconHtml}
           </div>
-          <div class="marker-pulse"></div>
+          <div class="marker-pulse" style="${isPlanned ? "background: rgba(16, 185, 129, 0.4); box-shadow: 0 0 8px #10b981;" : ""}"></div>
           
           <!-- Tooltip on hover -->
           <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
-            <div class="glass-panel px-3 py-1.5 rounded-xl border border-cyan-500/40 text-center whitespace-nowrap shadow-2xl">
+            <div class="glass-panel px-3 py-1.5 rounded-xl border ${isPlanned ? "border-emerald-500/60" : isCountry ? "border-amber-500/60" : "border-cyan-500/40"} text-center whitespace-nowrap shadow-2xl">
               <span class="text-xs font-bold text-white block">${photo.placeName || trip.title}</span>
-              <span class="text-[10px] text-cyan-300 font-medium">
-                ${trip.isMaskedDate ? `Anul ${trip.year}` : new Date(photo.takenAt).toLocaleDateString("ro-RO")}
+              <span class="text-[10px] ${isPlanned ? "text-emerald-300 font-semibold" : isCountry ? "text-amber-300" : "text-cyan-300"} font-medium">
+                ${tooltipSubtitle}
               </span>
             </div>
-            <div class="w-2 h-2 bg-slate-900 border-r border-b border-cyan-500/40 transform rotate-45 -mt-1"></div>
+            <div class="w-2 h-2 bg-slate-900 border-r border-b ${isPlanned ? "border-emerald-500/60" : isCountry ? "border-amber-500/60" : "border-cyan-500/40"} transform rotate-45 -mt-1"></div>
           </div>
         </div>
       `;
@@ -133,7 +168,7 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
         onSelectPhoto(photo, trip);
         map.flyTo({
           center: [photo.longitude, photo.latitude],
-          zoom: 10,
+          zoom: isCountry ? 5 : 10,
           pitch: 45,
           duration: 2200,
         });
@@ -148,7 +183,11 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
   }, [filteredPhotos, selectedPhoto, isGlobeLoaded, onSelectPhoto]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-slate-950 stars-overlay">
+    <div
+      className={`relative w-full h-full overflow-hidden transition-colors duration-500 ${
+        isLight ? "bg-[#f4f7f0]" : "bg-[#060b04] stars-overlay"
+      }`}
+    >
       {/* MapLibre WebGL Canvas Container */}
       <div ref={mapContainerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 

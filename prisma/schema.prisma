@@ -7,9 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 4 Authenticated Roles (plus unauthenticated PUBLIC)
 enum Role {
   ADMIN
-  USER
+  PARTNER
+  CLOSE_FRIEND
   VIEWER
 }
 
@@ -18,7 +20,7 @@ model User {
   email          String        @unique
   name           String
   passwordHash   String
-  role           String        @default("USER") // "ADMIN", "USER", "VIEWER"
+  role           String        @default("VIEWER") // "ADMIN", "PARTNER", "CLOSE_FRIEND", "VIEWER"
   canViewPrivate Boolean       @default(false)
   comments       Comment[]
   sharedTrips    TripAccess[]
@@ -26,36 +28,47 @@ model User {
 }
 
 model Trip {
-  id           String        @id @default(uuid())
-  title        String
-  description  String?
-  startDate    DateTime
-  endDate      DateTime?
-  isPrivate    Boolean       @default(false)
-  createdById  String
-  photos       Photo[]
-  comments     Comment[]
-  allowedUsers TripAccess[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                String        @id @default(uuid())
+  title             String
+  description       String?
+  startDate         DateTime
+  endDate           DateTime?
+  isPrivate         Boolean       @default(false)
+  minRole           String        @default("VIEWER") // "PUBLIC", "VIEWER", "CLOSE_FRIEND", "PARTNER", "ADMIN"
+  status            String        @default("COMPLETED") // "PLANNED" | "COMPLETED"
+  withPartner       Boolean       @default(false)   // Marked if traveled together with partner
+  partnerNotes      String?                         // Special travel details/notes visible only to partner & admin
+  latitude          Float?                          // Direct coords for planned trips before photos exist
+  longitude         Float?
+  planData          String?                         // JSON string: { destination, days, style, itinerary: [...], targetCheckpoints: [...] }
+  achievementReport String?                         // JSON string: { score, achieved: [...], missed: [...], extra: [...], summary: "..." }
+  createdById       String
+  photos            Photo[]
+  comments          Comment[]
+  allowedUsers      TripAccess[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 }
 
 model Photo {
-  id           String        @id @default(uuid())
-  tripId       String
-  trip         Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  url          String
-  thumbnailUrl String
-  latitude     Float
-  longitude    Float
-  placeName    String?
-  country      String?
-  city         String?
-  takenAt      DateTime
-  hasPeople    Boolean       @default(false)
-  isPrivate    Boolean       @default(false)
-  tags         String        @default("[]") // JSON string: ["beach", "sunset", "mountain"]
-  createdAt    DateTime      @default(now())
+  id                 String        @id @default(uuid())
+  tripId             String
+  trip               Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  url                String
+  thumbnailUrl       String
+  latitude           Float
+  longitude          Float
+  placeName          String?
+  country            String?
+  city               String?
+  takenAt            DateTime
+  hasPeople          Boolean       @default(false) // If true, requires at least CLOSE_FRIEND
+  isPrivate          Boolean       @default(false)
+  minRole            String        @default("VIEWER") // "PUBLIC", "VIEWER", "CLOSE_FRIEND", "PARTNER", "ADMIN"
+  isCountryCover     Boolean       @default(false) // Single designated showcase image for this country in Public mode
+  partnerPreselected Boolean       @default(false) // Auto-detected or marked couple/partner memory
+  tags               String        @default("[]") // JSON string: ["beach", "sunset", "mountain"]
+  createdAt          DateTime      @default(now())
 }
 
 model TripAccess {

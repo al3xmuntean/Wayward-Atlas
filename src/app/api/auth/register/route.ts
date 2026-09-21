@@ -1,31 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, signToken } from "@/lib/auth";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name } = await req.json();
-
-    if (!email || !password || !name) {
-      return NextResponse.json({ error: "Toate câmpurile sunt obligatorii" }, { status: 400 });
+    // Spam protection: max 5 registrations per minute per IP
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit("auth:register", clientIp, 5, 60000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Registration limit reached. Please wait ${rateLimit.resetInSeconds} seconds.` },
+        { status: 429 }
+      );
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const body = await req.json().catch(() => ({}));
+    const { email, password, name } = body;
+
+    if (!email || !password || !name) {
+      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    }
+
+    const normalizedEmail = String(email).toLowerCase().trim();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return NextResponse.json({ error: "Please provide a valid email address" }, { status: 400 });
+    }
+
+    if (typeof password !== "string" || password.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    }
+    if (password.length > 100) {
+      return NextResponse.json({ error: "Password must be at most 100 characters" }, { status: 400 });
+    }
+
     const existing = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
 
     if (existing) {
-      return NextResponse.json({ error: "Acest email este deja înregistrat" }, { status: 400 });
+      return NextResponse.json({ error: "This email address is already registered" }, { status: 400 });
     }
 
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.create({
       data: {
         email: normalizedEmail,
-        name: name.trim(),
+        name: String(name).trim().slice(0, 100),
         passwordHash,
-        role: "USER", // Default new users to registered USER
+        role: "VIEWER", // Default new registered users to VIEWER role
       },
     });
 
@@ -36,6 +61,7 @@ export async function POST(req: NextRequest) {
     });
 
     const response = NextResponse.json({
+      success: true,
       user: {
         id: user.id,
         email: user.email,
@@ -55,6 +81,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("Register error:", error);
-    return NextResponse.json({ error: "Eroare la înregistrare" }, { status: 500 });
+    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }

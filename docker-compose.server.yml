@@ -1,0 +1,79 @@
+services:
+  # 1. Wayward Atlas (3D Earth Travel Journal)
+  wayward-atlas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wayward-atlas
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - JWT_SECRET=wayward-atlas-production-secret-replace-me-12345
+      - LOCAL_AI_URL=http://host.docker.internal:1234/v1
+      - NEXT_PUBLIC_APP_NAME=Wayward Atlas
+    volumes:
+      - atlas_db:/app/prisma
+      - atlas_media:/app/public/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # 2. Jellyfin (Personal Netflix Streaming Service)
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+    volumes:
+      - jellyfin_config:/config
+      - jellyfin_cache:/cache
+      - D:/Media/Filme:/media/movies
+      - D:/Media/Seriale:/media/tv
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://localhost:8096
+
+  # 3. qBittorrent (Web UI Torrent Downloader)
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    ports:
+      - "8085:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Bucharest
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - qbittorrent_config:/config
+      - D:/Media/Downloads:/downloads
+      - D:/Media/Filme:/movies
+      - D:/Media/Seriale:/tv
+
+  # 4. Cloudflare Tunnel (Zero Trust encrypted remote bridge)
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  atlas_db:
+    driver: local
+  atlas_media:
+    driver: local
+  jellyfin_config:
+    driver: local
+  jellyfin_cache:
+    driver: local
+  qbittorrent_config:
+    driver: local

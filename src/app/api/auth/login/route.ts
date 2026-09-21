@@ -1,26 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { comparePassword, signToken } from "@/lib/auth";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email și parolă obligatorii" }, { status: 400 });
+    // Brute-force protection: max 10 login attempts per minute per IP
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit("auth:login", clientIp, 10, 60000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Too many login attempts. Please wait ${rateLimit.resetInSeconds} seconds before trying again.` },
+        { status: 429 }
+      );
     }
 
+    const body = await req.json().catch(() => ({}));
+    const { email, password } = body;
+
+    if (!email || !password || typeof email !== "string" || typeof password !== "string") {
+      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Credențiale invalide" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     const isValid = await comparePassword(password, user.passwordHash);
     if (!isValid) {
-      return NextResponse.json({ error: "Credențiale invalide" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     const token = signToken({
@@ -30,6 +43,7 @@ export async function POST(req: NextRequest) {
     });
 
     const response = NextResponse.json({
+      success: true,
       user: {
         id: user.id,
         email: user.email,
@@ -49,6 +63,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("Login error:", error);
-    return NextResponse.json({ error: "Eroare la autentificare" }, { status: 500 });
+    return NextResponse.json({ error: "Authentication failed" }, { status: 500 });
   }
 }
