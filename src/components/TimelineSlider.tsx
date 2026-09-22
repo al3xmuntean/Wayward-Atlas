@@ -44,7 +44,7 @@ export function TimelineSlider({
   if (years.length === 0) return null;
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 max-w-[92vw] pointer-events-auto">
+    <div className="absolute bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 max-w-[92vw] pointer-events-auto">
       {/* Month selector if a year is picked and not in guest mode */}
       {selectedYear !== null && !isGuest && (
         <div className="flex items-center gap-1 glass-panel px-3 py-1.5 rounded-full border-olive-500/30 animate-fade-in shadow-lg">

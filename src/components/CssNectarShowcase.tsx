@@ -247,7 +247,7 @@ export function CssNectarShowcase({
   const randomYear = randomTrip && randomTrip.startDate ? new Date(randomTrip.startDate).getFullYear() : "";
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36 pb-28 sm:pb-20">
       {/* Intro Bar: Pure Typography, CSS Nectar Style */}
       <div className="mb-10 text-center max-w-2xl mx-auto">
         <span className="px-3.5 py-1 rounded-full text-xs font-bold tracking-wider text-olive-800 dark:text-olive-300 bg-olive-500/15 border border-olive-500/30 uppercase mb-3 inline-block">

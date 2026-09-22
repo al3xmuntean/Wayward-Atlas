@@ -398,9 +398,9 @@ export default function HomePage() {
         onSelectViewMode={handleSelectViewMode}
       />
 
-      {/* Role State Pill Banner (Top Center) - Only on Globe / Map views */}
+      {/* Role State Pill Banner (Top Center) - Only on Globe / Map views on larger screens */}
       {viewMode !== "gallery" && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in">
+        <div className="hidden sm:block absolute top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in">
           {isPublicMode ? (
             <div className="glass-panel px-4 py-1.5 rounded-full border border-amber-500/40 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center gap-2 shadow-sm">
               <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
@@ -487,16 +487,15 @@ export default function HomePage() {
             isGuest={isPublicMode}
           />
 
-          {/* Quick Return to Showcase Gallery & Cosmic Odometer */}
-          <div className="absolute top-20 right-4 sm:right-6 z-30 pointer-events-auto animate-fade-in">
+          {/* Quick Return to Showcase Gallery & Cosmic Odometer (Desktop) */}
+          <div className="hidden md:flex absolute top-20 right-4 sm:right-6 z-30 pointer-events-auto animate-fade-in">
             <button
               onClick={() => setViewMode("gallery")}
               className="flex items-center gap-2 px-3.5 py-2 rounded-2xl glass-panel border border-olive-500/40 text-olive-900 dark:text-olive-200 hover:text-white hover:bg-olive-700 dark:hover:bg-olive-600 font-bold text-xs shadow-lg transition-all hover:scale-105"
               title="Comută la secțiunile Showcase (Amintire la Întâmplare & Odometru Cosmic)"
             >
               <LayoutGrid className="w-4 h-4 text-olive-600 dark:text-olive-400" />
-              <span className="hidden sm:inline">Showcase & Odometru Cosmic</span>
-              <span className="sm:hidden">Showcase</span>
+              <span>Showcase & Odometru Cosmic</span>
             </button>
           </div>
         </>
