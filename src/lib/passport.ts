@@ -203,3 +203,10 @@ export async function fetchWorldCountries(): Promise<any[]> {
   return res || [];
 }
 
+/**
+ * Returns cached world countries GeoJSON if already loaded
+ */
+export function getCachedWorldCountries(): any[] | null {
+  return cachedWorldCountries;
+}
+

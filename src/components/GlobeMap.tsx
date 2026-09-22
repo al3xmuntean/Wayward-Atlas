@@ -5,7 +5,7 @@ import maplibregl from "maplibre-gl";
 import { Compass, RotateCcw, Layers, ZoomIn, ZoomOut, Sparkles, Map as MapIcon } from "lucide-react";
 import { TripData, PhotoData } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
-import { extractVisitedCountries, fetchWorldCountries, VisitedCountry } from "@/lib/passport";
+import { extractVisitedCountries, fetchWorldCountries, getCachedWorldCountries, VisitedCountry } from "@/lib/passport";
 
 export interface GlobeMapRef {
   flyToLocation: (lat: number, lon: number, zoom?: number) => void;
@@ -40,7 +40,7 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
   const [internalShowCountries, setInternalShowCountries] = useState(true);
   const showCountries = showScratchMap !== undefined ? showScratchMap : internalShowCountries;
   const toggleCountries = onToggleScratchMap || (() => setInternalShowCountries((prev) => !prev));
-  const [countriesGeoJson, setCountriesGeoJson] = useState<any>(null);
+  const [countriesGeoJson, setCountriesGeoJson] = useState<any>(() => getCachedWorldCountries());
 
   // Sync internal mapStyle when user toggles global theme
   useEffect(() => {
@@ -218,12 +218,15 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
     const updateScratchLayers = () => {
       if (!mapRef.current) return;
       const m = mapRef.current;
-      if (!m.isStyleLoaded()) return;
 
-      if (!showCountries || !countriesGeoJson) {
-        if (m.getLayer(lineLayerId)) m.removeLayer(lineLayerId);
-        if (m.getLayer(fillLayerId)) m.removeLayer(fillLayerId);
-        if (m.getSource(sourceId)) m.removeSource(sourceId);
+      if (!showCountries || !countriesGeoJson || countriesGeoJson.length === 0) {
+        try {
+          if (m.getLayer(lineLayerId)) m.removeLayer(lineLayerId);
+          if (m.getLayer(fillLayerId)) m.removeLayer(fillLayerId);
+          if (m.getSource(sourceId)) m.removeSource(sourceId);
+        } catch (e) {
+          // ignore cleanup errors during style switch
+        }
         if (hoverPopupRef.current) {
           hoverPopupRef.current.remove();
           hoverPopupRef.current = null;
@@ -270,92 +273,104 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
         features: visitedFeatures,
       };
 
-      const existingSource = m.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
-      if (existingSource) {
-        existingSource.setData(geoData);
-      } else {
-        m.addSource(sourceId, {
-          type: "geojson",
-          data: geoData,
-        });
-      }
+      try {
+        const existingSource = m.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
+        if (existingSource) {
+          existingSource.setData(geoData);
+        } else {
+          m.addSource(sourceId, {
+            type: "geojson",
+            data: geoData,
+          });
+        }
 
-      const isLightMode = resolvedTheme === "light";
+        const isLightMode = resolvedTheme === "light";
 
-      if (!m.getLayer(fillLayerId)) {
-        m.addLayer({
-          id: fillLayerId,
-          type: "fill",
-          source: sourceId,
-          paint: {
-            "fill-color": isLightMode ? "#7da62b" : "#84cc16",
-            "fill-opacity": isLightMode ? 0.35 : 0.3,
-          },
-        });
+        if (!m.getLayer(fillLayerId)) {
+          m.addLayer({
+            id: fillLayerId,
+            type: "fill",
+            source: sourceId,
+            paint: {
+              "fill-color": isLightMode ? "#7da62b" : "#84cc16",
+              "fill-opacity": isLightMode ? 0.35 : 0.3,
+            },
+          });
 
-        // Add interactive hover tooltip
-        m.on("mousemove", fillLayerId, (e) => {
-          if (!e.features || e.features.length === 0) return;
-          m.getCanvas().style.cursor = "pointer";
-          const props: any = e.features[0].properties;
+          // Add interactive hover tooltip
+          m.on("mousemove", fillLayerId, (e) => {
+            if (!e.features || e.features.length === 0) return;
+            m.getCanvas().style.cursor = "pointer";
+            const props: any = e.features[0].properties;
 
-          if (!hoverPopupRef.current) {
-            hoverPopupRef.current = new maplibregl.Popup({
-              closeButton: false,
-              closeOnClick: false,
-              className: "scratch-country-popup",
-              offset: 12,
-            });
-          }
+            if (!hoverPopupRef.current) {
+              hoverPopupRef.current = new maplibregl.Popup({
+                closeButton: false,
+                closeOnClick: false,
+                className: "scratch-country-popup",
+                offset: 12,
+              });
+            }
 
-          const countText = props.visitedTrips === 1 ? "călătorie" : "călătorii";
-          hoverPopupRef.current
-            .setLngLat(e.lngLat)
-            .setHTML(`
-              <div style="background: rgba(18, 28, 14, 0.92); color: white; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; border: 1px solid rgba(125, 166, 43, 0.5); box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
-                <span>${props.visitedFlag || "🌍"}</span> <span style="color: #bef264;">${props.visitedName || "Țară"}</span>
-                <div style="font-size: 10px; color: #a3e635; font-weight: normal; margin-top: 2px;">
-                  ✓ Țară Răzuită • ${props.visitedTrips || 1} ${countText}
+            const countText = props.visitedTrips === 1 ? "călătorie" : "călătorii";
+            hoverPopupRef.current
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <div style="background: rgba(18, 28, 14, 0.92); color: white; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; border: 1px solid rgba(125, 166, 43, 0.5); box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
+                  <span>${props.visitedFlag || "🌍"}</span> <span style="color: #bef264;">${props.visitedName || "Țară"}</span>
+                  <div style="font-size: 10px; color: #a3e635; font-weight: normal; margin-top: 2px;">
+                    ✓ Țară Răzuită • ${props.visitedTrips || 1} ${countText}
+                  </div>
                 </div>
-              </div>
-            `)
-            .addTo(m);
-        });
+              `)
+              .addTo(m);
+          });
 
-        m.on("mouseleave", fillLayerId, () => {
-          m.getCanvas().style.cursor = "";
-          if (hoverPopupRef.current) {
-            hoverPopupRef.current.remove();
-            hoverPopupRef.current = null;
-          }
-        });
-      } else {
-        m.setPaintProperty(fillLayerId, "fill-color", isLightMode ? "#7da62b" : "#84cc16");
-        m.setPaintProperty(fillLayerId, "fill-opacity", isLightMode ? 0.35 : 0.3);
-      }
+          m.on("mouseleave", fillLayerId, () => {
+            m.getCanvas().style.cursor = "";
+            if (hoverPopupRef.current) {
+              hoverPopupRef.current.remove();
+              hoverPopupRef.current = null;
+            }
+          });
+        } else {
+          m.setPaintProperty(fillLayerId, "fill-color", isLightMode ? "#7da62b" : "#84cc16");
+          m.setPaintProperty(fillLayerId, "fill-opacity", isLightMode ? 0.35 : 0.3);
+        }
 
-      if (!m.getLayer(lineLayerId)) {
-        m.addLayer({
-          id: lineLayerId,
-          type: "line",
-          source: sourceId,
-          paint: {
-            "line-color": isLightMode ? "#65a30d" : "#bef264",
-            "line-width": 1.5,
-            "line-opacity": 0.85,
-          },
-        });
-      } else {
-        m.setPaintProperty(lineLayerId, "line-color", isLightMode ? "#65a30d" : "#bef264");
-        m.setPaintProperty(lineLayerId, "line-opacity", 0.85);
+        if (!m.getLayer(lineLayerId)) {
+          m.addLayer({
+            id: lineLayerId,
+            type: "line",
+            source: sourceId,
+            paint: {
+              "line-color": isLightMode ? "#65a30d" : "#bef264",
+              "line-width": 1.5,
+              "line-opacity": 0.85,
+            },
+          });
+        } else {
+          m.setPaintProperty(lineLayerId, "line-color", isLightMode ? "#65a30d" : "#bef264");
+          m.setPaintProperty(lineLayerId, "line-opacity", 0.85);
+        }
+      } catch (err) {
+        console.warn("Could not update scratch layers on MapLibre:", err);
       }
     };
 
-    if (map.isStyleLoaded()) {
-      updateScratchLayers();
-    } else {
-      map.once("styledata", updateScratchLayers);
-    }
+    updateScratchLayers();
+
+    // In case style was still completing on first tick, listen to styledata
+    const handleStyleData = () => {
+      if (!map.getSource(sourceId)) {
+        updateScratchLayers();
+      }
+    };
+    map.on("styledata", handleStyleData);
+
+    return () => {
+      map.off("styledata", handleStyleData);
+    };
   }, [showCountries, countriesGeoJson, trips, isGlobeLoaded, resolvedTheme, mapStyle]);
 
   return (

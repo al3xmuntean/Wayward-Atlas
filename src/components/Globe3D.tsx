@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } f
 import { RotateCcw, ZoomIn, ZoomOut, Sparkles, Compass, Map as MapIcon } from "lucide-react";
 import { TripData, PhotoData } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
-import { extractVisitedCountries, fetchWorldCountries, VisitedCountry } from "@/lib/passport";
+import { extractVisitedCountries, fetchWorldCountries, getCachedWorldCountries, VisitedCountry } from "@/lib/passport";
 
 export interface Globe3DRef {
   flyToLocation: (lat: number, lon: number, altitude?: number) => void;
@@ -197,7 +197,7 @@ export const Globe3D = forwardRef<Globe3DRef, Globe3DProps>(function Globe3D(
   const [internalShowCountries, setInternalShowCountries] = useState(true);
   const showCountries = showScratchMap !== undefined ? showScratchMap : internalShowCountries;
   const toggleCountries = onToggleScratchMap || (() => setInternalShowCountries((prev) => !prev));
-  const [countriesGeoJson, setCountriesGeoJson] = useState<any>(null);
+  const [countriesGeoJson, setCountriesGeoJson] = useState<any>(() => getCachedWorldCountries());
 
   // Lazy load countries GeoJSON when scratch-map polygon view is enabled
   useEffect(() => {
