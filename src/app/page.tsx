@@ -18,7 +18,7 @@ import { AtlasWrappedModal } from "@/components/AtlasWrappedModal";
 import { AccessRestrictedModal } from "@/components/AccessRestrictedModal";
 import { SafeUser, TripData, PhotoData } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/context";
-import { Star, Shield, Heart, Eye, LayoutGrid, Sparkles } from "lucide-react";
+import { Star, Shield, Heart, Eye } from "lucide-react";
 
 export default function HomePage() {
   const [currentUser, setCurrentUser] = useState<SafeUser | null>(null);
@@ -487,17 +487,6 @@ export default function HomePage() {
             isGuest={isPublicMode}
           />
 
-          {/* Quick Return to Showcase Gallery & Cosmic Odometer (Desktop) */}
-          <div className="hidden md:flex absolute top-20 right-4 sm:right-6 z-30 pointer-events-auto animate-fade-in">
-            <button
-              onClick={() => setViewMode("gallery")}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-2xl glass-panel border border-olive-500/40 text-olive-900 dark:text-olive-200 hover:text-white hover:bg-olive-700 dark:hover:bg-olive-600 font-bold text-xs shadow-lg transition-all hover:scale-105"
-              title="Comută la secțiunile Showcase (Amintire la Întâmplare & Odometru Cosmic)"
-            >
-              <LayoutGrid className="w-4 h-4 text-olive-600 dark:text-olive-400" />
-              <span>Showcase & Odometru Cosmic</span>
-            </button>
-          </div>
         </>
       )}
 
