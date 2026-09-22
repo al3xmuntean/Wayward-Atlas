@@ -176,3 +176,30 @@ export function getExplorationStats(visitedCountries: VisitedCountry[]): Explora
     rankBadge,
   };
 }
+
+let cachedWorldCountries: any[] | null = null;
+let pendingWorldCountriesPromise: Promise<any[]> | null = null;
+
+/**
+ * Loads world countries GeoJSON features with in-memory caching
+ */
+export async function fetchWorldCountries(): Promise<any[]> {
+  if (cachedWorldCountries) return cachedWorldCountries;
+  if (!pendingWorldCountriesPromise) {
+    pendingWorldCountriesPromise = fetch("/data/world-countries.json")
+      .then((res) => res.json())
+      .then((data) => {
+        const features = (data?.features as any[]) || [];
+        cachedWorldCountries = features;
+        return features;
+      })
+      .catch((err) => {
+        pendingWorldCountriesPromise = null;
+        console.warn("Could not load world countries geojson:", err);
+        return [] as any[];
+      });
+  }
+  const res = await pendingWorldCountriesPromise;
+  return res || [];
+}
+

@@ -32,6 +32,7 @@ export default function HomePage() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showScratchMap, setShowScratchMap] = useState(true);
 
   // Drawer & Selection state
   const [selectedTrip, setSelectedTrip] = useState<TripData | null>(null);
@@ -456,6 +457,8 @@ export default function HomePage() {
           filteredPhotos={filteredPhotos}
           onSelectPhoto={handleSelectPhoto}
           selectedPhoto={selectedPhoto}
+          showScratchMap={showScratchMap}
+          onToggleScratchMap={() => setShowScratchMap(!showScratchMap)}
         />
       ) : (
         <GlobeMap
@@ -464,6 +467,8 @@ export default function HomePage() {
           filteredPhotos={filteredPhotos}
           onSelectPhoto={handleSelectPhoto}
           selectedPhoto={selectedPhoto}
+          showScratchMap={showScratchMap}
+          onToggleScratchMap={() => setShowScratchMap(!showScratchMap)}
         />
       )}
 

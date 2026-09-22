@@ -2,9 +2,10 @@
 
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
-import { Compass, RotateCcw, Layers, ZoomIn, ZoomOut, Sparkles } from "lucide-react";
+import { Compass, RotateCcw, Layers, ZoomIn, ZoomOut, Sparkles, Map as MapIcon } from "lucide-react";
 import { TripData, PhotoData } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
+import { extractVisitedCountries, fetchWorldCountries, VisitedCountry } from "@/lib/passport";
 
 export interface GlobeMapRef {
   flyToLocation: (lat: number, lon: number, zoom?: number) => void;
@@ -16,13 +17,15 @@ interface GlobeMapProps {
   filteredPhotos: Array<{ photo: PhotoData; trip: TripData }>;
   onSelectPhoto: (photo: PhotoData, trip: TripData) => void;
   selectedPhoto: PhotoData | null;
+  showScratchMap?: boolean;
+  onToggleScratchMap?: () => void;
 }
 
 const CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 const CARTO_VOYAGER = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 
 export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap(
-  { trips, filteredPhotos, onSelectPhoto, selectedPhoto },
+  { trips, filteredPhotos, onSelectPhoto, selectedPhoto, showScratchMap, onToggleScratchMap },
   ref
 ) {
   const { resolvedTheme } = useTheme();
@@ -30,17 +33,34 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const hoverPopupRef = useRef<maplibregl.Popup | null>(null);
   const [mapStyle, setMapStyle] = useState<"dark" | "voyager">(isLight ? "voyager" : "dark");
   const [isGlobeLoaded, setIsGlobeLoaded] = useState(false);
+
+  const [internalShowCountries, setInternalShowCountries] = useState(true);
+  const showCountries = showScratchMap !== undefined ? showScratchMap : internalShowCountries;
+  const toggleCountries = onToggleScratchMap || (() => setInternalShowCountries((prev) => !prev));
+  const [countriesGeoJson, setCountriesGeoJson] = useState<any>(null);
 
   // Sync internal mapStyle when user toggles global theme
   useEffect(() => {
     setMapStyle(resolvedTheme === "light" ? "voyager" : "dark");
   }, [resolvedTheme]);
 
+  // Lazy load countries GeoJSON when scratch-map polygon view is enabled
+  useEffect(() => {
+    if (!showCountries || countriesGeoJson) return;
+    fetchWorldCountries()
+      .then((features) => {
+        if (features && features.length > 0) setCountriesGeoJson(features);
+      })
+      .catch((err) => console.warn("Could not load countries geojson for map:", err));
+  }, [showCountries, countriesGeoJson]);
+
   // Initialize MapLibre with 3D Globe projection
   useEffect(() => {
     if (!mapContainerRef.current) return;
+    setIsGlobeLoaded(false);
 
     const initialStyle = resolvedTheme === "light" ? CARTO_VOYAGER : CARTO_DARK;
     const map = new maplibregl.Map({
@@ -67,6 +87,10 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
     mapRef.current = map;
 
     return () => {
+      if (hoverPopupRef.current) {
+        hoverPopupRef.current.remove();
+        hoverPopupRef.current = null;
+      }
       markersRef.current.forEach((m) => m.remove());
       map.remove();
       mapRef.current = null;
@@ -182,6 +206,158 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
     });
   }, [filteredPhotos, selectedPhoto, isGlobeLoaded, onSelectPhoto]);
 
+  // Update visited countries scratch map layer on MapLibre
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isGlobeLoaded) return;
+
+    const sourceId = "scratch-countries";
+    const fillLayerId = "scratch-countries-fill";
+    const lineLayerId = "scratch-countries-line";
+
+    const updateScratchLayers = () => {
+      if (!mapRef.current) return;
+      const m = mapRef.current;
+      if (!m.isStyleLoaded()) return;
+
+      if (!showCountries || !countriesGeoJson) {
+        if (m.getLayer(lineLayerId)) m.removeLayer(lineLayerId);
+        if (m.getLayer(fillLayerId)) m.removeLayer(fillLayerId);
+        if (m.getSource(sourceId)) m.removeSource(sourceId);
+        if (hoverPopupRef.current) {
+          hoverPopupRef.current.remove();
+          hoverPopupRef.current = null;
+        }
+        return;
+      }
+
+      const visitedCountries = extractVisitedCountries(trips);
+      const visitedIsoSet = new Set(visitedCountries.map((c) => c.isoA2.toUpperCase()));
+      const visitedIso3Set = new Set(visitedCountries.map((c) => c.isoA3.toUpperCase()));
+      const visitedNames = new Set(visitedCountries.map((c) => c.normalizedName.toLowerCase()));
+      const visitedMap = new Map<string, VisitedCountry>();
+      visitedCountries.forEach((c) => {
+        visitedMap.set(c.isoA2.toUpperCase(), c);
+        visitedMap.set(c.isoA3.toUpperCase(), c);
+        visitedMap.set(c.normalizedName.toLowerCase(), c);
+      });
+
+      const visitedFeatures = countriesGeoJson
+        .filter((feat: any) => {
+          const iso2 = (feat.properties?.ISO_A2 || "").toUpperCase();
+          const iso3 = (feat.properties?.ISO_A3 || "").toUpperCase();
+          const name = (feat.properties?.ADMIN || feat.properties?.NAME || "").toLowerCase();
+          return visitedIsoSet.has(iso2) || visitedIso3Set.has(iso3) || visitedNames.has(name);
+        })
+        .map((feat: any) => {
+          const iso2 = (feat.properties?.ISO_A2 || "").toUpperCase();
+          const iso3 = (feat.properties?.ISO_A3 || "").toUpperCase();
+          const name = (feat.properties?.ADMIN || feat.properties?.NAME || "").toLowerCase();
+          const visitedInfo = visitedMap.get(iso2) || visitedMap.get(iso3) || visitedMap.get(name);
+          return {
+            ...feat,
+            properties: {
+              ...feat.properties,
+              visitedName: visitedInfo?.name || feat.properties?.ADMIN || feat.properties?.NAME,
+              visitedFlag: visitedInfo?.flag || "🌍",
+              visitedTrips: visitedInfo?.tripsCount || 1,
+            },
+          };
+        });
+
+      const geoData: any = {
+        type: "FeatureCollection",
+        features: visitedFeatures,
+      };
+
+      const existingSource = m.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
+      if (existingSource) {
+        existingSource.setData(geoData);
+      } else {
+        m.addSource(sourceId, {
+          type: "geojson",
+          data: geoData,
+        });
+      }
+
+      const isLightMode = resolvedTheme === "light";
+
+      if (!m.getLayer(fillLayerId)) {
+        m.addLayer({
+          id: fillLayerId,
+          type: "fill",
+          source: sourceId,
+          paint: {
+            "fill-color": isLightMode ? "#7da62b" : "#84cc16",
+            "fill-opacity": isLightMode ? 0.35 : 0.3,
+          },
+        });
+
+        // Add interactive hover tooltip
+        m.on("mousemove", fillLayerId, (e) => {
+          if (!e.features || e.features.length === 0) return;
+          m.getCanvas().style.cursor = "pointer";
+          const props: any = e.features[0].properties;
+
+          if (!hoverPopupRef.current) {
+            hoverPopupRef.current = new maplibregl.Popup({
+              closeButton: false,
+              closeOnClick: false,
+              className: "scratch-country-popup",
+              offset: 12,
+            });
+          }
+
+          const countText = props.visitedTrips === 1 ? "călătorie" : "călătorii";
+          hoverPopupRef.current
+            .setLngLat(e.lngLat)
+            .setHTML(`
+              <div style="background: rgba(18, 28, 14, 0.92); color: white; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; border: 1px solid rgba(125, 166, 43, 0.5); box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
+                <span>${props.visitedFlag || "🌍"}</span> <span style="color: #bef264;">${props.visitedName || "Țară"}</span>
+                <div style="font-size: 10px; color: #a3e635; font-weight: normal; margin-top: 2px;">
+                  ✓ Țară Răzuită • ${props.visitedTrips || 1} ${countText}
+                </div>
+              </div>
+            `)
+            .addTo(m);
+        });
+
+        m.on("mouseleave", fillLayerId, () => {
+          m.getCanvas().style.cursor = "";
+          if (hoverPopupRef.current) {
+            hoverPopupRef.current.remove();
+            hoverPopupRef.current = null;
+          }
+        });
+      } else {
+        m.setPaintProperty(fillLayerId, "fill-color", isLightMode ? "#7da62b" : "#84cc16");
+        m.setPaintProperty(fillLayerId, "fill-opacity", isLightMode ? 0.35 : 0.3);
+      }
+
+      if (!m.getLayer(lineLayerId)) {
+        m.addLayer({
+          id: lineLayerId,
+          type: "line",
+          source: sourceId,
+          paint: {
+            "line-color": isLightMode ? "#65a30d" : "#bef264",
+            "line-width": 1.5,
+            "line-opacity": 0.85,
+          },
+        });
+      } else {
+        m.setPaintProperty(lineLayerId, "line-color", isLightMode ? "#65a30d" : "#bef264");
+        m.setPaintProperty(lineLayerId, "line-opacity", 0.85);
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      updateScratchLayers();
+    } else {
+      map.once("styledata", updateScratchLayers);
+    }
+  }, [showCountries, countriesGeoJson, trips, isGlobeLoaded, resolvedTheme, mapStyle]);
+
   return (
     <div
       className={`relative w-full h-full overflow-hidden transition-colors duration-500 ${
@@ -193,6 +369,21 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(function GlobeMap
 
       {/* Floating Map Navigation Controls */}
       <div className="absolute right-6 top-24 z-20 flex flex-col gap-2 pointer-events-auto">
+        {/* Toggle Scratch Map (Harta Răzuibilă) */}
+        <button
+          onClick={toggleCountries}
+          aria-label={showCountries ? "Ascunde conturul țărilor vizitate" : "Evidențiază țările vizitate (Harta răzuibilă)"}
+          aria-pressed={showCountries}
+          title={showCountries ? "Ascunde conturul țărilor" : "Harta răzuibilă: evidențiază țările vizitate"}
+          className={`p-3 rounded-2xl transition-all hover:scale-105 ${
+            showCountries
+              ? "bg-olive-600 text-white shadow-glow ring-2 ring-olive-400"
+              : "glass-panel text-slate-700 dark:text-slate-200 hover:text-white hover:bg-olive-700"
+          }`}
+        >
+          <MapIcon className="w-5 h-5" aria-hidden="true" />
+        </button>
+
         {/* Reset to 3D Orbit View */}
         <button
           onClick={() => {

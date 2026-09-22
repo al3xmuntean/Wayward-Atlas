@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
-import { RotateCcw, ZoomIn, ZoomOut, Sparkles, Compass, Map } from "lucide-react";
+import { RotateCcw, ZoomIn, ZoomOut, Sparkles, Compass, Map as MapIcon } from "lucide-react";
 import { TripData, PhotoData } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
-import { extractVisitedCountries } from "@/lib/passport";
+import { extractVisitedCountries, fetchWorldCountries, VisitedCountry } from "@/lib/passport";
 
 export interface Globe3DRef {
   flyToLocation: (lat: number, lon: number, altitude?: number) => void;
@@ -16,10 +16,12 @@ interface Globe3DProps {
   filteredPhotos: Array<{ photo: PhotoData; trip: TripData }>;
   onSelectPhoto: (photo: PhotoData, trip: TripData) => void;
   selectedPhoto: PhotoData | null;
+  showScratchMap?: boolean;
+  onToggleScratchMap?: () => void;
 }
 
 export const Globe3D = forwardRef<Globe3DRef, Globe3DProps>(function Globe3D(
-  { trips, filteredPhotos, onSelectPhoto, selectedPhoto },
+  { trips, filteredPhotos, onSelectPhoto, selectedPhoto, showScratchMap, onToggleScratchMap },
   ref
 ) {
   const { resolvedTheme } = useTheme();
@@ -192,16 +194,17 @@ export const Globe3D = forwardRef<Globe3DRef, Globe3DProps>(function Globe3D(
     }
   }, [resolvedTheme, isReady]);
 
-  const [showCountries, setShowCountries] = useState(false);
+  const [internalShowCountries, setInternalShowCountries] = useState(true);
+  const showCountries = showScratchMap !== undefined ? showScratchMap : internalShowCountries;
+  const toggleCountries = onToggleScratchMap || (() => setInternalShowCountries((prev) => !prev));
   const [countriesGeoJson, setCountriesGeoJson] = useState<any>(null);
 
   // Lazy load countries GeoJSON when scratch-map polygon view is enabled
   useEffect(() => {
     if (!showCountries || countriesGeoJson) return;
-    fetch("/data/world-countries.json")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.features) setCountriesGeoJson(data.features);
+    fetchWorldCountries()
+      .then((features) => {
+        if (features && features.length > 0) setCountriesGeoJson(features);
       })
       .catch((err) => console.warn("Could not load countries geojson:", err));
   }, [showCountries, countriesGeoJson]);
@@ -218,6 +221,13 @@ export const Globe3D = forwardRef<Globe3DRef, Globe3DProps>(function Globe3D(
     const visitedIsoSet = new Set(visitedCountries.map((c) => c.isoA2.toUpperCase()));
     const visitedIso3Set = new Set(visitedCountries.map((c) => c.isoA3.toUpperCase()));
     const visitedNames = new Set(visitedCountries.map((c) => c.normalizedName.toLowerCase()));
+    const visitedMap = new Map<string, VisitedCountry>();
+    visitedCountries.forEach((c) => {
+      visitedMap.set(c.isoA2.toUpperCase(), c);
+      visitedMap.set(c.isoA3.toUpperCase(), c);
+      visitedMap.set(c.normalizedName.toLowerCase(), c);
+    });
+
     const currentIsLight = resolvedTheme === "light";
 
     globeInstanceRef.current
@@ -241,6 +251,21 @@ export const Globe3D = forwardRef<Globe3DRef, Globe3DProps>(function Globe3D(
         const name = (feat.properties?.ADMIN || feat.properties?.NAME || "").toLowerCase();
         const isVisited = visitedIsoSet.has(iso2) || visitedIso3Set.has(iso3) || visitedNames.has(name);
         return isVisited ? "rgba(180, 220, 60, 0.8)" : "rgba(255, 255, 255, 0.04)";
+      })
+      .polygonLabel((feat: any) => {
+        const iso2 = (feat.properties?.ISO_A2 || "").toUpperCase();
+        const iso3 = (feat.properties?.ISO_A3 || "").toUpperCase();
+        const name = (feat.properties?.ADMIN || feat.properties?.NAME || "").toLowerCase();
+        const visitedInfo = visitedMap.get(iso2) || visitedMap.get(iso3) || visitedMap.get(name);
+        if (!visitedInfo) return "";
+        return `
+          <div style="background: rgba(18, 28, 14, 0.92); color: white; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; border: 1px solid rgba(125, 166, 43, 0.5); box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
+            <span>${visitedInfo.flag}</span> <span style="color: #bef264;">${visitedInfo.name}</span>
+            <div style="font-size: 10px; color: #a3e635; font-weight: normal; margin-top: 2px;">
+              ✓ Țară Răzuită • ${visitedInfo.tripsCount} ${visitedInfo.tripsCount === 1 ? "călătorie" : "călătorii"}
+            </div>
+          </div>
+        `;
       });
   }, [showCountries, countriesGeoJson, trips, isReady, resolvedTheme]);
 
@@ -284,17 +309,17 @@ export const Globe3D = forwardRef<Globe3DRef, Globe3DProps>(function Globe3D(
       {/* Floating Controls */}
       <div className="absolute right-6 top-24 z-20 flex flex-col gap-2 pointer-events-auto">
         <button
-          onClick={() => setShowCountries(!showCountries)}
+          onClick={toggleCountries}
           aria-label={showCountries ? "Ascunde conturul țărilor vizitate" : "Evidențiază țările vizitate (Harta răzuibilă)"}
           aria-pressed={showCountries}
           title={showCountries ? "Ascunde conturul țărilor" : "Harta răzuibilă: evidențiază țările vizitate"}
           className={`p-3 rounded-2xl transition-all hover:scale-105 ${
             showCountries
               ? "bg-olive-600 text-white shadow-glow ring-2 ring-olive-400"
-              : "glass-panel text-slate-300 hover:text-white hover:bg-slate-800"
+              : "glass-panel text-slate-700 dark:text-slate-200 hover:text-white hover:bg-olive-700"
           }`}
         >
-          <Map className="w-5 h-5" aria-hidden="true" />
+          <MapIcon className="w-5 h-5" aria-hidden="true" />
         </button>
 
         <button
