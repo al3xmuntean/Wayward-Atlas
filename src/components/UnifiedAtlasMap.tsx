@@ -94,6 +94,10 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
     const [isMapReady, setIsMapReady] = useState(false);
     // currentActiveLayer: "globe" when looking from high altitude, "street" when zoomed in
     const [activeLayer, setActiveLayer] = useState<"globe" | "street">("globe");
+    const activeLayerRef = useRef(activeLayer);
+    useEffect(() => {
+      activeLayerRef.current = activeLayer;
+    }, [activeLayer]);
     const [mapStyle, setMapStyle] = useState<"dark" | "voyager">("voyager");
     const [countriesGeoJson, setCountriesGeoJson] = useState<any>(() => getCachedWorldCountries());
     const isTransitioningRef = useRef(false);
@@ -349,6 +353,7 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
       // Listen to zoom-out on 2D map to trigger seamless return to 3D Globe!
       map.on("zoomend", () => {
         if (isTransitioningRef.current) return;
+        if (activeLayerRef.current !== "street") return;
         const currentZoom = map.getZoom();
         if (currentZoom < TRANSITION_ZOOM_THRESHOLD) {
           const center = map.getCenter();

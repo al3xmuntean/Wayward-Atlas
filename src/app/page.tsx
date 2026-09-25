@@ -570,16 +570,14 @@ export default function HomePage() {
       )}
 
       {/* Redesigned Split-Screen Bulk Upload Studio Modal */}
-      {isUploadOpen && (
-        <BulkUploadStudioModal
-          isOpen={isUploadOpen}
-          onClose={() => setIsUploadOpen(false)}
-          onTripCreated={() => {
-            fetchTrips();
-            unifiedMapRef.current?.resetView();
-          }}
-        />
-      )}
+      <BulkUploadStudioModal
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onTripCreated={() => {
+          fetchTrips();
+          unifiedMapRef.current?.resetView();
+        }}
+      />
 
       {/* Admin Users & Permissions Management Modal */}
       {isUsersModalOpen && (

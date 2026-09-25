@@ -24,6 +24,7 @@ import {
   Sliders,
   ChevronDown,
   ChevronUp,
+  Search,
 } from "lucide-react";
 import { VisibilityRole } from "@/lib/types";
 import { useModalA11y } from "@/hooks/useModalA11y";
@@ -76,7 +77,6 @@ export function BulkUploadStudioModal({
   onTripCreated,
 }: BulkUploadStudioModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
-  useModalA11y({ isOpen, onClose, modalRef });
 
   const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
@@ -95,6 +95,13 @@ export function BulkUploadStudioModal({
   const [partnerNotes, setPartnerNotes] = useState("");
   const [tripMinRole, setTripMinRole] = useState<VisibilityRole>("VIEWER");
 
+  // Keep fresh references for map event handlers
+  const titleRef = useRef(title);
+  const withPartnerRef = useRef(withPartner);
+  const spotsRef = useRef<SpotGroup[]>([]);
+  useEffect(() => { titleRef.current = title; }, [title]);
+  useEffect(() => { withPartnerRef.current = withPartner; }, [withPartner]);
+
   // Multilingual translations
   const [activeLangTab, setActiveLangTab] = useState<Language>("ro");
   const [translations, setTranslations] = useState<Record<string, { title: string; description: string }>>({
@@ -111,11 +118,159 @@ export function BulkUploadStudioModal({
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [unmappedPhotoIds, setUnmappedPhotoIds] = useState<string[]>([]);
   const [activePhotoForEdit, setActivePhotoForEdit] = useState<PhotoItemDraft | null>(null);
+  const unmappedPhotos = useMemo(
+    () => photos.filter((p) => unmappedPhotoIds.includes(p.id)),
+    [photos, unmappedPhotoIds]
+  );
+  useEffect(() => { spotsRef.current = spots; }, [spots]);
+
+  // Map location search
+  const [mapSearchQuery, setMapSearchQuery] = useState("");
+  const [searchingLocation, setSearchingLocation] = useState(false);
 
   // Processing & progress
   const [processingFiles, setProcessingFiles] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Reset entire draft state
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setStartDate(new Date().toISOString().split("T")[0]);
+    setEndDate("");
+    setWithPartner(false);
+    setPartnerNotes("");
+    setTripMinRole("VIEWER");
+    setTranslations({
+      en: { title: "", description: "" },
+      de: { title: "", description: "" },
+      es: { title: "", description: "" },
+      fr: { title: "", description: "" },
+    });
+    setPhotos([]);
+    setSpots([]);
+    setUnmappedPhotoIds([]);
+    setSelectedSpotId(null);
+    setActivePhotoForEdit(null);
+  };
+
+  // Safe Close Handlers - Prevent Accidental Loss of Uploads / Work
+  const handleClosePrompt = () => {
+    if (photos.length > 0 || title.trim().length > 0) {
+      if (window.confirm("Sigur dorești să închizi fereastra? Progresul tău este păstrat în memorie până finalizezi sau apeși pe Anulează.")) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
+
+  const handleCancel = () => {
+    if (photos.length > 0 || title.trim().length > 0) {
+      if (window.confirm("Sigur dorești să anulezi? Toate fotografiile și datele introduse vor fi șterse.")) {
+        resetForm();
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target !== e.currentTarget) return;
+    handleClosePrompt();
+  };
+
+  useModalA11y({ isOpen, onClose: handleClosePrompt, modalRef });
+
+  // Resize MapLibre whenever modal becomes visible
+  useEffect(() => {
+    if (isOpen && mapRef.current) {
+      const timer = setTimeout(() => {
+        mapRef.current?.resize();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Remove individual photo
+  const handleRemovePhoto = (photoId: string) => {
+    setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+    setUnmappedPhotoIds((prev) => prev.filter((id) => id !== photoId));
+    setSpots((prev) =>
+      prev
+        .map((s) => ({
+          ...s,
+          photoIds: s.photoIds.filter((id) => id !== photoId),
+        }))
+        .filter((s) => s.photoIds.length > 0)
+    );
+    if (activePhotoForEdit?.id === photoId) {
+      setActivePhotoForEdit(null);
+    }
+  };
+
+  // Assign all unmapped photos to the current center of the mini-map
+  const handleAssignUnmappedToMapCenter = () => {
+    if (unmappedPhotoIds.length === 0) return;
+    const center = mapRef.current?.getCenter() || { lng: 24.12, lat: 45.79 };
+    const lat = center.lat;
+    const lng = center.lng;
+
+    const newSpotId = `spot-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const defaultName = titleRef.current.trim()
+      ? titleRef.current.trim()
+      : `Punct Foto ${spots.length + 1}`;
+
+    const newSpot: SpotGroup = {
+      id: newSpotId,
+      name: defaultName,
+      description: "",
+      latitude: lat,
+      longitude: lng,
+      minRole: withPartnerRef.current ? "PARTNER" : "VIEWER",
+      photoIds: [...unmappedPhotoIds],
+    };
+
+    setSpots((prev) => [...prev, newSpot]);
+    setPhotos((prev) =>
+      prev.map((p) =>
+        unmappedPhotoIds.includes(p.id)
+          ? { ...p, latitude: lat, longitude: lng, spotName: defaultName }
+          : p
+      )
+    );
+    setSelectedSpotId(newSpotId);
+    setUnmappedPhotoIds([]);
+
+    if (mapRef.current) {
+      mapRef.current.flyTo({ center: [lng, lat], zoom: 11 });
+    }
+  };
+
+  // Geocode location search
+  const handleSearchLocation = async (query: string) => {
+    if (!query.trim() || !mapRef.current) return;
+    setSearchingLocation(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
+      );
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        mapRef.current.flyTo({ center: [lon, lat], zoom: 11, essential: true });
+      } else {
+        alert("Locația căutată nu a fost găsită. Încearcă un alt nume de oraș sau insulă.");
+      }
+    } catch (err) {
+      console.warn("Geocoding request failed:", err);
+    } finally {
+      setSearchingLocation(false);
+    }
+  };
 
   // Drag and drop state
   const [isDragging, setIsDragging] = useState(false);
@@ -172,8 +327,6 @@ export function BulkUploadStudioModal({
       handleFilesSelected(e.dataTransfer.files);
     }
   };
-
-  if (!isOpen) return null;
 
   // =========================================================================
   // 1. FILE IMPORT & EXIF SPOT CLUSTERING
@@ -292,7 +445,15 @@ export function BulkUploadStudioModal({
       style: CARTO_VOYAGER,
       center: [24.12, 45.79],
       zoom: 6,
+      minZoom: 2.5,
+      maxZoom: 18,
     });
+
+    const navControl = new maplibregl.NavigationControl({
+      showCompass: true,
+      visualizePitch: true,
+    });
+    map.addControl(navControl, "top-right");
 
     map.on("load", () => {
       mapRef.current = map;
@@ -304,7 +465,9 @@ export function BulkUploadStudioModal({
           if (currentUnmapped.length === 0) return currentUnmapped;
 
           const newSpotId = `spot-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-          const defaultName = `Punct Fixat Manual ${spots.length + 1}`;
+          const defaultName = titleRef.current.trim()
+            ? titleRef.current.trim()
+            : `Punct Foto ${spotsRef.current.length + 1}`;
 
           setSpots((prevSpots) => [
             ...prevSpots,
@@ -314,7 +477,7 @@ export function BulkUploadStudioModal({
               description: "",
               latitude: lat,
               longitude: lng,
-              minRole: "VIEWER",
+              minRole: withPartnerRef.current ? "PARTNER" : "VIEWER",
               photoIds: [...currentUnmapped],
             },
           ]);
@@ -564,6 +727,7 @@ export function BulkUploadStudioModal({
         throw new Error(errData.error || "Eroare la salvarea călătoriei");
       }
 
+      resetForm();
       onTripCreated();
       onClose();
     } catch (err: any) {
@@ -580,12 +744,20 @@ export function BulkUploadStudioModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="bulk-studio-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 dark:bg-slate-950/85 backdrop-blur-md animate-fade-in"
-      onClick={onClose}
+      aria-hidden={!isOpen}
+      className={
+        isOpen
+          ? "fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 dark:bg-slate-950/85 backdrop-blur-md animate-fade-in"
+          : "hidden"
+      }
+      onClick={handleBackdropClick}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
     >
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -625,7 +797,7 @@ export function BulkUploadStudioModal({
             <button
               onClick={() => fileInputRef.current?.click()}
               aria-label="Adaugă imagini prin încărcare multiplă"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold transition-all shadow-md active:scale-95 focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold transition-all shadow-md active:scale-95 focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Adaugă Imagini (Multi-Drop)</span>
@@ -641,9 +813,9 @@ export function BulkUploadStudioModal({
             />
 
             <button
-              onClick={onClose}
+              onClick={handleClosePrompt}
               aria-label="Închide fereastra de upload"
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -818,14 +990,81 @@ export function BulkUploadStudioModal({
               </div>
             </div>
 
-            {/* Unmapped Photos Warning Banner */}
+            {/* Unmapped Photos Section with Thumbnails & Quick Actions */}
             {unmappedPhotoIds.length > 0 && (
-              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-                    {unmappedPhotoIds.length} fotografii nu au GPS. Apasă oriunde pe hartă pentru a le fixa!
-                  </p>
+              <div className="p-4 rounded-3xl bg-amber-50/90 dark:bg-amber-500/10 border-2 border-amber-300 dark:border-amber-500/30 space-y-3 shadow-md animate-fade-in">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-800 dark:text-amber-200 flex items-center justify-center font-extrabold text-xs">
+                      {unmappedPhotoIds.length}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-950 dark:text-amber-200">
+                        Fotografii fără coordonate GPS ({unmappedPhotoIds.length})
+                      </h4>
+                      <p className="text-[11px] text-amber-800 dark:text-amber-300/80">
+                        Apasă pe oricare fotografie pentru detalii, sau grupează-le pe hartă:
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAssignUnmappedToMapCenter}
+                    className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                    title="Creează un pin la locația vizibilă în centrul hărții"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>Fixează toate în centrul hărții</span>
+                  </button>
+                </div>
+
+                {/* Grid of Unmapped Photo Previews */}
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-48 overflow-y-auto p-1.5 border border-amber-200 dark:border-amber-500/20 rounded-2xl bg-white/70 dark:bg-slate-900/70">
+                  {unmappedPhotos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-amber-500 shadow-xs bg-slate-950"
+                      onClick={() => setActivePhotoForEdit(photo)}
+                    >
+                      <img
+                        src={photo.previewUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      {/* Hover action overlay */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActivePhotoForEdit(photo);
+                          }}
+                          className="p-1 rounded-lg bg-white/90 text-slate-800 hover:bg-white transition-colors cursor-pointer"
+                          title="Editează detalii poză"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemovePhoto(photo.id);
+                          }}
+                          className="p-1 rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors cursor-pointer"
+                          title="Elimină fotografia"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
+                  <span>
+                    💡 <strong className="text-amber-700 dark:text-amber-300">Sfat:</strong> Poți căuta destinația în căutarea de pe hartă și apoi apăsa pe <em>"Fixează toate în centrul hărții"</em> sau da click pe hartă.
+                  </span>
                 </div>
               </div>
             )}
@@ -836,7 +1075,7 @@ export function BulkUploadStudioModal({
                 Puncte & Pin-uri Detectate ({spots.length})
               </h3>
 
-              {spots.length === 0 ? (
+              {photos.length === 0 ? (
                 <div
                   role="button"
                   tabIndex={0}
@@ -871,6 +1110,18 @@ export function BulkUploadStudioModal({
                     <Plus className="w-4 h-4" />
                     <span>Selectează Fotografii</span>
                   </div>
+                </div>
+              ) : spots.length === 0 ? (
+                <div className="p-6 rounded-3xl border border-dashed border-amber-300 dark:border-amber-500/40 bg-amber-50/40 dark:bg-amber-500/5 text-center space-y-2">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center justify-center mx-auto">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                    Toate cele {photos.length} fotografii sunt încărcate!
+                  </p>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                    Apasă pe butonul <strong className="text-amber-700 dark:text-amber-300">"Fixează toate în centrul hărții"</strong> de mai sus sau dă click oriunde pe harta din dreapta pentru a crea pin-ul acestora.
+                  </p>
                 </div>
               ) : (
                 spots.map((spot, sIdx) => {
@@ -1009,14 +1260,44 @@ export function BulkUploadStudioModal({
           <div
             role="region"
             aria-label="Mini-hartă interactivă pentru poziționarea și ajustarea spoturilor pe hartă"
-            className="w-full lg:w-1/2 h-64 lg:h-full relative bg-slate-100 dark:bg-slate-950"
+            className="w-full lg:w-1/2 h-64 lg:h-full relative bg-slate-100 dark:bg-slate-950 overflow-hidden"
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
           >
             <div ref={mapContainerRef} className="w-full h-full" />
 
+            {/* Destination Quick Search */}
+            <div className="absolute top-3 left-3 right-16 z-20 flex items-center gap-2">
+              <div className="flex-1 relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Caută destinație pe hartă (ex: Gran Canaria)..."
+                  value={mapSearchQuery}
+                  onChange={(e) => setMapSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSearchLocation(mapSearchQuery);
+                    }
+                  }}
+                  className="w-full pl-8 pr-3 py-1.5 rounded-full text-xs font-medium bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 shadow-md focus:outline-none focus:ring-2 focus:ring-olive-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSearchLocation(mapSearchQuery)}
+                disabled={searchingLocation}
+                className="px-3.5 py-1.5 rounded-full bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold shadow-md transition-all shrink-0 active:scale-95 disabled:opacity-50 cursor-pointer"
+              >
+                {searchingLocation ? "..." : "Mergi"}
+              </button>
+            </div>
+
             {/* Map Overlay Instructions */}
-            <div className="absolute top-3 left-3 z-10 glass-panel px-3 py-1.5 rounded-full border border-olive-500/30 text-xs font-semibold text-slate-800 dark:text-white shadow-md flex items-center gap-1.5 pointer-events-none">
+            <div className="absolute bottom-6 left-3 z-10 glass-panel px-3 py-1.5 rounded-full border border-olive-500/30 text-[11px] font-semibold text-slate-800 dark:text-white shadow-md flex items-center gap-1.5 pointer-events-none">
               <MapPin className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" />
-              <span>Trage pin-urile pe hartă pentru ajustare precisă</span>
+              <span>Trage pin-urile pe hartă sau apasă pe hartă pentru a fixa un spot</span>
             </div>
           </div>
         </div>
@@ -1041,10 +1322,10 @@ export function BulkUploadStudioModal({
 
           <div className="flex items-center gap-3">
             <button
-              onClick={onClose}
+              onClick={handleCancel}
               disabled={submitting}
               aria-label="Anulează procesul și închide fereastra"
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none cursor-pointer"
             >
               Anulează
             </button>
@@ -1052,7 +1333,7 @@ export function BulkUploadStudioModal({
               onClick={handleSubmit}
               disabled={submitting || photos.length === 0}
               aria-label="Publică călătoria și fotografiile în atlas"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -1081,13 +1362,76 @@ export function BulkUploadStudioModal({
             >
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-bold">Editează Detalii Fotografie</h4>
-                <button onClick={() => setActivePhotoForEdit(null)} className="p-1 rounded-lg text-slate-400">
+                <button
+                  onClick={() => setActivePhotoForEdit(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950">
+              <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center">
                 <img src={activePhotoForEdit.previewUrl} alt="" className="w-full h-full object-contain" />
+              </div>
+
+              {/* GPS status pill & quick map assign */}
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-xs">
+                {activePhotoForEdit.latitude && activePhotoForEdit.longitude ? (
+                  <div className="flex items-center gap-1.5 text-olive-700 dark:text-olive-300 font-semibold truncate">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    <span>GPS: {activePhotoForEdit.latitude.toFixed(4)}, {activePhotoForEdit.longitude.toFixed(4)}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 font-semibold">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Fără GPS</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const center = mapRef.current?.getCenter() || { lng: 24.12, lat: 45.79 };
+                    const lat = center.lat;
+                    const lng = center.lng;
+                    setPhotos((prev) =>
+                      prev.map((p) =>
+                        p.id === activePhotoForEdit.id
+                          ? { ...p, latitude: lat, longitude: lng }
+                          : p
+                      )
+                    );
+                    setActivePhotoForEdit((prev) =>
+                      prev ? { ...prev, latitude: lat, longitude: lng } : null
+                    );
+                    setUnmappedPhotoIds((prev) => prev.filter((id) => id !== activePhotoForEdit.id));
+                    const targetSpot = spots.find(
+                      (s) => Math.abs(s.latitude - lat) < 0.005 && Math.abs(s.longitude - lng) < 0.005
+                    );
+                    if (targetSpot) {
+                      setSpots((prev) =>
+                        prev.map((s) => (s.id === targetSpot.id ? { ...s, photoIds: [...s.photoIds, activePhotoForEdit.id] } : s))
+                      );
+                    } else {
+                      const newSpotId = `spot-${Date.now()}`;
+                      setSpots((prev) => [
+                        ...prev,
+                        {
+                          id: newSpotId,
+                          name: titleRef.current.trim() || `Punct Foto ${spots.length + 1}`,
+                          description: "",
+                          latitude: lat,
+                          longitude: lng,
+                          minRole: withPartnerRef.current ? "PARTNER" : "VIEWER",
+                          photoIds: [activePhotoForEdit.id],
+                        },
+                      ]);
+                    }
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-olive-700 hover:bg-olive-600 text-white text-[11px] font-bold shadow-xs shrink-0 cursor-pointer"
+                >
+                  Setează la centrul hărții
+                </button>
               </div>
 
               <input
@@ -1101,11 +1445,11 @@ export function BulkUploadStudioModal({
                     prev.map((p) => (p.id === activePhotoForEdit.id ? { ...p, caption: val } : p))
                   );
                 }}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700"
+                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer text-xs">
+              <div className="flex items-center justify-between pt-2">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
                   <input
                     type="checkbox"
                     checked={activePhotoForEdit.partnerPreselected}
@@ -1116,16 +1460,27 @@ export function BulkUploadStudioModal({
                         prev.map((p) => (p.id === activePhotoForEdit.id ? { ...p, partnerPreselected: checked } : p))
                       );
                     }}
+                    className="rounded text-rose-600 focus:ring-rose-500"
                   />
                   <span>Poză Specială În Doi</span>
                 </label>
 
-                <button
-                  onClick={() => setActivePhotoForEdit(null)}
-                  className="px-4 py-1.5 rounded-xl bg-olive-700 text-white text-xs font-bold"
-                >
-                  Gata
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhoto(activePhotoForEdit.id)}
+                    className="px-2.5 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Șterge</span>
+                  </button>
+                  <button
+                    onClick={() => setActivePhotoForEdit(null)}
+                    className="px-4 py-1.5 rounded-xl bg-olive-700 text-white text-xs font-bold hover:bg-olive-600 cursor-pointer"
+                  >
+                    Gata
+                  </button>
+                </div>
               </div>
             </div>
           </div>
