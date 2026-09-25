@@ -1,0 +1,984 @@
+"use client";
+
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import maplibregl from "maplibre-gl";
+import exifr from "exifr";
+import {
+  X,
+  Upload,
+  MapPin,
+  Calendar,
+  Lock,
+  Globe2,
+  Sparkles,
+  Heart,
+  Star,
+  Eye,
+  Shield,
+  Layers,
+  Check,
+  AlertCircle,
+  Plus,
+  Trash2,
+  Edit2,
+  Sliders,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { VisibilityRole } from "@/lib/types";
+import { useModalA11y } from "@/hooks/useModalA11y";
+import { FlagIcon } from "@/components/FlagIcon";
+import { Language } from "@/lib/i18n/types";
+import { useTranslation } from "@/lib/i18n/context";
+
+const CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+const CARTO_VOYAGER = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+
+interface PhotoItemDraft {
+  id: string;
+  file: File;
+  previewUrl: string;
+  latitude: number | null;
+  longitude: number | null;
+  takenAt: string;
+  spotName: string;
+  spotDescription?: string;
+  caption?: string;
+  minRole: VisibilityRole;
+  isPrivate: boolean;
+  hasPeople: boolean;
+  isCountryCover: boolean;
+  partnerPreselected: boolean;
+}
+
+interface SpotGroup {
+  id: string;
+  name: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  city?: string;
+  country?: string;
+  minRole: VisibilityRole;
+  photoIds: string[];
+}
+
+interface BulkUploadStudioModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onTripCreated: () => void;
+}
+
+export function BulkUploadStudioModal({
+  isOpen,
+  onClose,
+  onTripCreated,
+}: BulkUploadStudioModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useModalA11y({ isOpen, onClose, modalRef });
+
+  const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+
+  // Trip basic info
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [endDate, setEndDate] = useState("");
+  const [withPartner, setWithPartner] = useState(false);
+  const [partnerNotes, setPartnerNotes] = useState("");
+  const [tripMinRole, setTripMinRole] = useState<VisibilityRole>("VIEWER");
+
+  // Multilingual translations
+  const [activeLangTab, setActiveLangTab] = useState<Language>("ro");
+  const [translations, setTranslations] = useState<Record<string, { title: string; description: string }>>({
+    en: { title: "", description: "" },
+    de: { title: "", description: "" },
+    es: { title: "", description: "" },
+    fr: { title: "", description: "" },
+  });
+  const [translating, setTranslating] = useState(false);
+
+  // Photos & Spots
+  const [photos, setPhotos] = useState<PhotoItemDraft[]>([]);
+  const [spots, setSpots] = useState<SpotGroup[]>([]);
+  const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
+  const [unmappedPhotoIds, setUnmappedPhotoIds] = useState<string[]>([]);
+  const [activePhotoForEdit, setActivePhotoForEdit] = useState<PhotoItemDraft | null>(null);
+
+  // Processing & progress
+  const [processingFiles, setProcessingFiles] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!isOpen) return null;
+
+  // =========================================================================
+  // 1. FILE IMPORT & EXIF SPOT CLUSTERING
+  // =========================================================================
+  const handleFilesSelected = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setProcessingFiles(true);
+
+    const newDrafts: PhotoItemDraft[] = [];
+    const newUnmapped: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const previewUrl = URL.createObjectURL(file);
+      const photoId = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      let lat: number | null = null;
+      let lon: number | null = null;
+      let takenAt = new Date().toISOString();
+
+      try {
+        const exifData = await exifr.parse(file, [
+          "latitude",
+          "longitude",
+          "DateTimeOriginal",
+          "CreateDate",
+        ]);
+
+        if (exifData?.latitude && exifData?.longitude) {
+          lat = Number(exifData.latitude);
+          lon = Number(exifData.longitude);
+        }
+        if (exifData?.DateTimeOriginal || exifData?.CreateDate) {
+          const d = new Date(exifData.DateTimeOriginal || exifData.CreateDate);
+          if (!isNaN(d.getTime())) takenAt = d.toISOString();
+        }
+      } catch (err) {
+        console.warn("Could not parse EXIF for file:", file.name, err);
+      }
+
+      const draft: PhotoItemDraft = {
+        id: photoId,
+        file,
+        previewUrl,
+        latitude: lat,
+        longitude: lon,
+        takenAt,
+        spotName: "",
+        minRole: withPartner ? "PARTNER" : "VIEWER",
+        isPrivate: false,
+        hasPeople: false,
+        isCountryCover: false,
+        partnerPreselected: withPartner,
+      };
+
+      newDrafts.push(draft);
+      if (!lat || !lon) {
+        newUnmapped.push(photoId);
+      }
+    }
+
+    // Auto-cluster mapped photos into Spots (photos within ~100m)
+    const updatedSpots = [...spots];
+
+    newDrafts.forEach((draft) => {
+      if (!draft.latitude || !draft.longitude) return;
+
+      // Find nearby spot
+      const matched = updatedSpots.find((s) => {
+        const dLat = Math.abs(s.latitude - draft.latitude!);
+        const dLon = Math.abs(s.longitude - draft.longitude!);
+        return dLat < 0.0015 && dLon < 0.0015; // ~100-150 meters
+      });
+
+      if (matched) {
+        matched.photoIds.push(draft.id);
+        draft.spotName = matched.name;
+      } else {
+        const newSpotId = `spot-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const defaultName = `Locație ${updatedSpots.length + 1}`;
+        updatedSpots.push({
+          id: newSpotId,
+          name: defaultName,
+          description: "",
+          latitude: draft.latitude,
+          longitude: draft.longitude,
+          minRole: withPartner ? "PARTNER" : "VIEWER",
+          photoIds: [draft.id],
+        });
+        draft.spotName = defaultName;
+      }
+    });
+
+    setPhotos((prev) => [...prev, ...newDrafts]);
+    setSpots(updatedSpots);
+    setUnmappedPhotoIds((prev) => [...prev, ...newUnmapped]);
+    setProcessingFiles(false);
+
+    // If first spots detected, center map on first spot
+    if (updatedSpots.length > 0 && mapRef.current) {
+      const first = updatedSpots[0];
+      mapRef.current.flyTo({ center: [first.longitude, first.latitude], zoom: 12 });
+      setSelectedSpotId(first.id);
+    }
+  };
+
+  // =========================================================================
+  // 2. MINI-MAP INITIALIZATION & DRAGGABLE PINS
+  // =========================================================================
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: CARTO_DARK,
+      center: [24.12, 45.79],
+      zoom: 6,
+    });
+
+    map.on("load", () => {
+      mapRef.current = map;
+      // Click on map to assign unmapped photos
+      map.on("click", (e) => {
+        const { lng, lat } = e.lngLat;
+        // If there are unmapped photos, assign them to a new spot at click coordinates
+        setUnmappedPhotoIds((currentUnmapped) => {
+          if (currentUnmapped.length === 0) return currentUnmapped;
+
+          const newSpotId = `spot-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          const defaultName = `Punct Fixat Manual ${spots.length + 1}`;
+
+          setSpots((prevSpots) => [
+            ...prevSpots,
+            {
+              id: newSpotId,
+              name: defaultName,
+              description: "",
+              latitude: lat,
+              longitude: lng,
+              minRole: "VIEWER",
+              photoIds: [...currentUnmapped],
+            },
+          ]);
+
+          setPhotos((prevPhotos) =>
+            prevPhotos.map((p) =>
+              currentUnmapped.includes(p.id)
+                ? { ...p, latitude: lat, longitude: lng, spotName: defaultName }
+                : p
+            )
+          );
+
+          setSelectedSpotId(newSpotId);
+          return []; // Cleared unmapped
+        });
+      });
+    });
+
+    return () => {
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current.clear();
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Sync Draggable Markers with Spots
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Remove markers that no longer exist
+    const currentSpotIds = new Set(spots.map((s) => s.id));
+    markersRef.current.forEach((marker, id) => {
+      if (!currentSpotIds.has(id)) {
+        marker.remove();
+        markersRef.current.delete(id);
+      }
+    });
+
+    // Add or update markers
+    spots.forEach((spot) => {
+      const isSelected = spot.id === selectedSpotId;
+
+      if (markersRef.current.has(spot.id)) {
+        const existing = markersRef.current.get(spot.id)!;
+        existing.setLngLat([spot.longitude, spot.latitude]);
+        return;
+      }
+
+      // Create custom draggable marker element
+      const el = document.createElement("div");
+      el.className = "cursor-grab active:cursor-grabbing group";
+      el.innerHTML = `
+        <div class="relative flex items-center justify-center transition-transform hover:scale-120">
+          <div class="w-8 h-8 rounded-full border-2 ${isSelected ? "border-amber-400 bg-amber-600" : "border-olive-400 bg-olive-700"} text-white flex items-center justify-center font-bold text-xs shadow-lg">
+            ${spot.photoIds.length}
+          </div>
+          <div class="absolute -bottom-5 px-2 py-0.5 rounded-md bg-slate-900/90 text-[10px] text-white font-semibold whitespace-nowrap shadow-md border border-slate-700 pointer-events-none">
+            ${spot.name}
+          </div>
+        </div>
+      `;
+
+      const marker = new maplibregl.Marker({ element: el, draggable: true })
+        .setLngLat([spot.longitude, spot.latitude])
+        .addTo(mapRef.current!);
+
+      // On Drag End: update spot and all its photos coordinates in real time!
+      marker.on("dragend", () => {
+        const lngLat = marker.getLngLat();
+        setSpots((prev) =>
+          prev.map((s) => (s.id === spot.id ? { ...s, latitude: lngLat.lat, longitude: lngLat.lng } : s))
+        );
+        setPhotos((prev) =>
+          prev.map((p) =>
+            spot.photoIds.includes(p.id)
+              ? { ...p, latitude: lngLat.lat, longitude: lngLat.lng }
+              : p
+          )
+        );
+      });
+
+      el.onclick = (e) => {
+        e.stopPropagation();
+        setSelectedSpotId(spot.id);
+      };
+
+      markersRef.current.set(spot.id, marker);
+    });
+  }, [spots, selectedSpotId]);
+
+  // =========================================================================
+  // 3. BATCH ACTIONS & SPOT EDITS
+  // =========================================================================
+  const applyRoleToSpot = (spotId: string, role: VisibilityRole) => {
+    setSpots((prev) =>
+      prev.map((s) => (s.id === spotId ? { ...s, minRole: role } : s))
+    );
+    const targetSpot = spots.find((s) => s.id === spotId);
+    if (!targetSpot) return;
+
+    setPhotos((prev) =>
+      prev.map((p) =>
+        targetSpot.photoIds.includes(p.id)
+          ? {
+              ...p,
+              minRole: role,
+              isPrivate: role === "ADMIN",
+              partnerPreselected: role === "PARTNER",
+            }
+          : p
+      )
+    );
+  };
+
+  const applyRoleToAllSpots = (role: VisibilityRole) => {
+    setSpots((prev) => prev.map((s) => ({ ...s, minRole: role })));
+    setPhotos((prev) =>
+      prev.map((p) => ({
+        ...p,
+        minRole: role,
+        isPrivate: role === "ADMIN",
+        partnerPreselected: role === "PARTNER",
+      }))
+    );
+  };
+
+  // AI Multilingual Translation
+  const handleTranslateAll = async () => {
+    if (!title) return;
+    setTranslating(true);
+    try {
+      const res = await fetch("/api/ai/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          all: true,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.translations) {
+        setTranslations(data.translations);
+      }
+    } catch (err) {
+      console.error("AI translation error:", err);
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  // =========================================================================
+  // 4. SUBMIT BATCH UPLOAD & TRIP CREATION
+  // =========================================================================
+  const handleSubmit = async () => {
+    if (!title || !startDate) {
+      alert("Te rugăm să completezi titlul și data călătoriei.");
+      return;
+    }
+    if (photos.length === 0) {
+      alert("Adaugă cel puțin o fotografie.");
+      return;
+    }
+
+    setSubmitting(true);
+    setUploadProgress("Se pregătesc imaginile...");
+
+    try {
+      // 1. Upload images in chunks of 15 files
+      const CHUNK_SIZE = 15;
+      const uploadedResults: any[] = [];
+
+      for (let i = 0; i < photos.length; i += CHUNK_SIZE) {
+        const chunk = photos.slice(i, i + CHUNK_SIZE);
+        setUploadProgress(`Se optimizează WebP ${i + 1}-${Math.min(i + CHUNK_SIZE, photos.length)} din ${photos.length} imagini...`);
+
+        const formData = new FormData();
+        chunk.forEach((p) => {
+          formData.append("files", p.file);
+        });
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.error || "Eroare la încărcarea fotografiilor");
+        }
+
+        const items = uploadData.uploads || [uploadData];
+        uploadedResults.push(...items);
+      }
+
+      // 2. Prepare structured photos payload
+      setUploadProgress("Se creează călătoria și se generează Atlasul...");
+
+      const payloadPhotos = photos.map((p, idx) => {
+        const uploaded = uploadedResults[idx] || {};
+        const spot = spots.find((s) => s.photoIds.includes(p.id));
+
+        return {
+          url: uploaded.url,
+          thumbnailUrl: uploaded.thumbnailUrl || uploaded.url,
+          originalUrl: uploaded.originalUrl || uploaded.url,
+          latitude: p.latitude || spot?.latitude || 0,
+          longitude: p.longitude || spot?.longitude || 0,
+          placeName: p.spotName || spot?.name || title,
+          spotName: p.spotName || spot?.name || null,
+          spotDescription: spot?.description || null,
+          caption: p.caption || null,
+          takenAt: p.takenAt,
+          hasPeople: p.hasPeople,
+          isPrivate: p.isPrivate,
+          minRole: p.minRole,
+          partnerPreselected: p.partnerPreselected,
+          isCountryCover: p.isCountryCover,
+          tags: [],
+        };
+      });
+
+      // 3. Post to /api/trips
+      const primarySpot = spots[0];
+      const tripRes = await fetch("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          startDate,
+          endDate: endDate || null,
+          withPartner,
+          partnerNotes: withPartner ? partnerNotes : null,
+          minRole: tripMinRole,
+          isPrivate: tripMinRole === "ADMIN",
+          latitude: primarySpot ? primarySpot.latitude : null,
+          longitude: primarySpot ? primarySpot.longitude : null,
+          translations,
+          photos: payloadPhotos,
+        }),
+      });
+
+      if (!tripRes.ok) {
+        const errData = await tripRes.json();
+        throw new Error(errData.error || "Eroare la salvarea călătoriei");
+      }
+
+      onTripCreated();
+      onClose();
+    } catch (err: any) {
+      console.error("Batch creation failed:", err);
+      alert(err.message || "A apărut o problemă la salvare.");
+    } finally {
+      setSubmitting(false);
+      setUploadProgress(null);
+    }
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-7xl h-[94vh] glass-panel-glow rounded-3xl border border-olive-500/30 overflow-hidden flex flex-col shadow-2xl bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-3.5 border-b border-olive-500/20 bg-olive-500/5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-olive-700 text-white flex items-center justify-center shadow-md">
+              <Upload className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold">Studio Curare & Upload Spatial</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {photos.length} fotografii • {spots.length} puncte pe hartă
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Adaugă Imagini (Multi-Drop)</span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFilesSelected(e.target.files)}
+            />
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Split Screen Workspace */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* =========================================================================
+              LEFT PANEL: Trip Info, Spots List, and Photo Grids
+              ========================================================================= */}
+          <div className="w-full lg:w-1/2 flex flex-col border-r border-olive-500/20 overflow-y-auto p-5 space-y-5">
+            {/* Trip Details Box */}
+            <div className="space-y-3 p-4 rounded-2xl bg-olive-500/10 border border-olive-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-olive-800 dark:text-olive-300">
+                  Date Călătorie & Album
+                </span>
+
+                {/* Multilingual Selector */}
+                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-300 dark:border-slate-700">
+                  {(["ro", "en", "de", "es", "fr"] as Language[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setActiveLangTab(lang)}
+                      className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-colors ${
+                        activeLangTab === lang
+                          ? "bg-olive-700 text-white"
+                          : "text-slate-600 dark:text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <FlagIcon code={lang} className="w-3.5 h-2.5 inline mr-1" />
+                      {lang.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {activeLangTab === "ro" ? (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Titlu Călătorie (ex: Expediție Toscana & Coasta Amalfi)..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:outline-none focus:border-olive-500"
+                  />
+                  <textarea
+                    placeholder="Descriere generală sau notițe..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:outline-none focus:border-olive-500 resize-none"
+                  />
+                </>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    placeholder={`Titlu în ${activeLangTab.toUpperCase()}...`}
+                    value={translations[activeLangTab]?.title || ""}
+                    onChange={(e) =>
+                      setTranslations((prev) => ({
+                        ...prev,
+                        [activeLangTab]: { ...prev[activeLangTab], title: e.target.value },
+                      }))
+                    }
+                    className="w-full px-3 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800"
+                  />
+                  <textarea
+                    placeholder={`Descriere în ${activeLangTab.toUpperCase()}...`}
+                    value={translations[activeLangTab]?.description || ""}
+                    onChange={(e) =>
+                      setTranslations((prev) => ({
+                        ...prev,
+                        [activeLangTab]: { ...prev[activeLangTab], description: e.target.value },
+                      }))
+                    }
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 resize-none"
+                  />
+                </>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="px-2 py-1 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800"
+                  />
+                  <span className="text-xs text-slate-400">până la</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="px-2 py-1 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800"
+                  />
+                </div>
+
+                <button
+                  onClick={handleTranslateAll}
+                  disabled={translating || !title}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-olive-600/20 hover:bg-olive-600/30 text-olive-800 dark:text-olive-300 text-xs font-bold transition-all disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{translating ? "Se traduce..." : "Tradu cu AI în 4 Limbi"}</span>
+                </button>
+              </div>
+
+              {/* Partner Toggle */}
+              <div className="flex items-center justify-between pt-2 border-t border-olive-500/15">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={withPartner}
+                    onChange={(e) => setWithPartner(e.target.checked)}
+                    className="rounded text-rose-600 focus:ring-rose-500"
+                  />
+                  <span className="text-xs font-bold flex items-center gap-1 text-rose-700 dark:text-rose-300">
+                    <Heart className="w-3.5 h-3.5 fill-rose-500" />
+                    Călătorie în doi cu partenerul
+                  </span>
+                </label>
+
+                {withPartner && (
+                  <button
+                    onClick={() => applyRoleToAllSpots("PARTNER")}
+                    className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                  >
+                    Setează toate pozele pe Partener
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Batch Visibility Toolbar */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Setare Vizibilitate Globală:
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => applyRoleToAllSpots("PUBLIC")}
+                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-olive-500/20 transition-colors"
+                >
+                  Public
+                </button>
+                <button
+                  onClick={() => applyRoleToAllSpots("CLOSE_FRIEND")}
+                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30 transition-colors"
+                >
+                  Prieteni
+                </button>
+                {withPartner && (
+                  <button
+                    onClick={() => applyRoleToAllSpots("PARTNER")}
+                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-500/20 text-rose-800 dark:text-rose-200 hover:bg-rose-500/30 transition-colors"
+                  >
+                    În Doi
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Unmapped Photos Warning Banner */}
+            {unmappedPhotoIds.length > 0 && (
+              <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                    {unmappedPhotoIds.length} fotografii nu au GPS. Apasă oriunde pe hartă pentru a le fixa!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Spots Accordion List */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Puncte & Pin-uri Detectate ({spots.length})
+              </h3>
+
+              {spots.length === 0 ? (
+                <div className="py-12 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center text-center p-6">
+                  <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                  <p className="text-sm font-bold">Nicio fotografie adăugată</p>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                    Trage sau selectează fotografii de pe cameră / telefon. Datele GPS le vor grupa automat pe hartă!
+                  </p>
+                </div>
+              ) : (
+                spots.map((spot, sIdx) => {
+                  const isSelected = spot.id === selectedSpotId;
+                  const spotPhotos = photos.filter((p) => spot.photoIds.includes(p.id));
+
+                  return (
+                    <div
+                      key={spot.id}
+                      className={`p-4 rounded-3xl border transition-all duration-200 ${
+                        isSelected
+                          ? "border-olive-500 bg-olive-500/10 shadow-lg ring-1 ring-olive-500/30"
+                          : "border-slate-300 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60"
+                      }`}
+                    >
+                      {/* Spot Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2 flex-1 mr-3">
+                          <button
+                            onClick={() => {
+                              setSelectedSpotId(spot.id);
+                              if (mapRef.current) {
+                                mapRef.current.flyTo({ center: [spot.longitude, spot.latitude], zoom: 14 });
+                              }
+                            }}
+                            className="w-7 h-7 rounded-xl bg-olive-700 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm"
+                          >
+                            {sIdx + 1}
+                          </button>
+                          <input
+                            type="text"
+                            value={spot.name}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setSpots((prev) =>
+                                prev.map((s) => (s.id === spot.id ? { ...s, name: val } : s))
+                              );
+                              setPhotos((prev) =>
+                                prev.map((p) => (spot.photoIds.includes(p.id) ? { ...p, spotName: val } : p))
+                              );
+                            }}
+                            placeholder="Nume Locație / Spot..."
+                            className="font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-300 focus:border-olive-500 focus:outline-none flex-1 truncate"
+                          />
+                        </div>
+
+                        {/* Visibility Pill for Spot */}
+                        <div className="flex items-center gap-1">
+                          {(["PUBLIC", "CLOSE_FRIEND", "PARTNER"] as VisibilityRole[]).map((r) => (
+                            <button
+                              key={r}
+                              onClick={() => applyRoleToSpot(spot.id, r)}
+                              className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-colors ${
+                                spot.minRole === r
+                                  ? r === "PARTNER"
+                                    ? "bg-rose-600 text-white"
+                                    : r === "CLOSE_FRIEND"
+                                    ? "bg-amber-600 text-white"
+                                    : "bg-olive-700 text-white"
+                                  : "text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                              }`}
+                            >
+                              {r === "PARTNER" ? "În Doi" : r === "CLOSE_FRIEND" ? "Prieteni" : "Public"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Optional Spot Description */}
+                      <input
+                        type="text"
+                        value={spot.description}
+                        onChange={(e) =>
+                          setSpots((prev) =>
+                            prev.map((s) => (s.id === spot.id ? { ...s, description: e.target.value } : s))
+                          )
+                        }
+                        placeholder="Adaugă o notă pentru tot grupul (opțional)..."
+                        className="w-full text-xs text-slate-600 dark:text-slate-400 bg-transparent border-b border-slate-200 dark:border-slate-800 focus:border-olive-500 focus:outline-none mb-3 pb-1"
+                      />
+
+                      {/* Photo Thumbnails Grid in Spot */}
+                      <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                        {spotPhotos.map((photo) => (
+                          <div
+                            key={photo.id}
+                            onClick={() => setActivePhotoForEdit(photo)}
+                            className="relative aspect-square rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 cursor-pointer group bg-slate-900"
+                          >
+                            <img
+                              src={photo.previewUrl}
+                              alt=""
+                              className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                            />
+                            {photo.caption && (
+                              <div className="absolute inset-x-0 bottom-0 bg-slate-950/80 px-1 py-0.5 text-[8px] text-white truncate">
+                                {photo.caption}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* =========================================================================
+              RIGHT PANEL: Interactive Mini-Map for Pin Dragging & Geographic Positioning
+              ========================================================================= */}
+          <div className="w-full lg:w-1/2 h-64 lg:h-full relative bg-slate-950">
+            <div ref={mapContainerRef} className="w-full h-full" />
+
+            {/* Map Overlay Instructions */}
+            <div className="absolute top-3 left-3 z-10 glass-panel px-3 py-1.5 rounded-full border border-olive-500/30 text-xs font-semibold text-white shadow-md flex items-center gap-1.5 pointer-events-none">
+              <MapPin className="w-3.5 h-3.5 text-olive-400" />
+              <span>Trage pin-urile pe hartă pentru ajustare precisă</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-olive-500/20 bg-white/80 dark:bg-slate-900/80">
+          <div>
+            {uploadProgress ? (
+              <p className="text-xs font-bold text-olive-600 dark:text-olive-400 animate-pulse">
+                {uploadProgress}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500">
+                {photos.length} fotografii vor fi convertite automat în WebP optimizat
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              disabled={submitting}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+            >
+              Anulează
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || photos.length === 0}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50"
+            >
+              {submitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Se publică...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Publică Călătoria & Actualizează Atlasul</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Modal for Single Photo Caption / Override */}
+        {activePhotoForEdit && (
+          <div
+            className="absolute inset-0 z-40 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setActivePhotoForEdit(null)}
+          >
+            <div
+              className="w-full max-w-md rounded-3xl glass-panel-glow border border-olive-500/30 p-5 bg-white dark:bg-slate-900 shadow-2xl space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold">Editează Detalii Fotografie</h4>
+                <button onClick={() => setActivePhotoForEdit(null)} className="p-1 rounded-lg text-slate-400">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950">
+                <img src={activePhotoForEdit.previewUrl} alt="" className="w-full h-full object-contain" />
+              </div>
+
+              <input
+                type="text"
+                placeholder="Titlu sau descriere specifică pentru această poză..."
+                value={activePhotoForEdit.caption || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setActivePhotoForEdit((prev) => (prev ? { ...prev, caption: val } : null));
+                  setPhotos((prev) =>
+                    prev.map((p) => (p.id === activePhotoForEdit.id ? { ...p, caption: val } : p))
+                  );
+                }}
+                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700"
+              />
+
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer text-xs">
+                  <input
+                    type="checkbox"
+                    checked={activePhotoForEdit.partnerPreselected}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setActivePhotoForEdit((prev) => (prev ? { ...prev, partnerPreselected: checked } : null));
+                      setPhotos((prev) =>
+                        prev.map((p) => (p.id === activePhotoForEdit.id ? { ...p, partnerPreselected: checked } : p))
+                      );
+                    }}
+                  />
+                  <span>Poză Specială În Doi</span>
+                </label>
+
+                <button
+                  onClick={() => setActivePhotoForEdit(null)}
+                  className="px-4 py-1.5 rounded-xl bg-olive-700 text-white text-xs font-bold"
+                >
+                  Gata
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

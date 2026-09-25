@@ -21,6 +21,10 @@ export interface PhotoData {
   placeName?: string | null;
   country?: string | null;
   city?: string | null;
+  spotName?: string | null;
+  spotDescription?: string | null;
+  caption?: string | null;
+  originalUrl?: string | null;
   takenAt: string; // ISO string
   takenYear?: number;
   hasPeople: boolean;
@@ -29,6 +33,23 @@ export interface PhotoData {
   isCountryCover?: boolean;
   partnerPreselected?: boolean;
   tags: string[]; // parsed from JSON
+}
+
+export interface SpotPinData {
+  id: string;
+  latitude: number;
+  longitude: number;
+  name: string;
+  description?: string | null;
+  country?: string | null;
+  city?: string | null;
+  photos: PhotoData[];
+  tripIds: string[];
+  totalPhotosCount: number;
+  hasPartnerPhotos: boolean;
+  hasFriendsPhotos: boolean;
+  hasPublicPhotos: boolean;
+  coverPhoto: PhotoData;
 }
 
 export interface CommentData {

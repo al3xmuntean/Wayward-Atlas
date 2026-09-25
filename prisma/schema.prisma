@@ -62,6 +62,10 @@ model Photo {
   placeName          String?
   country            String?
   city               String?
+  spotName           String?       // Specific POI / Spot name (e.g. "Turnul Sfatului", "Piața Mare")
+  spotDescription    String?       // Description for the spot / POI
+  caption            String?       // Photo-specific title or caption
+  originalUrl        String?       // Full-resolution original photo URL for download
   takenAt            DateTime
   hasPeople          Boolean       @default(false) // If true, requires at least CLOSE_FRIEND
   isPrivate          Boolean       @default(false)

@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Navbar, ViewMode } from "@/components/Navbar";
-import { Globe3D, Globe3DRef } from "@/components/Globe3D";
-import { GlobeMap, GlobeMapRef } from "@/components/GlobeMap";
+import { UnifiedAtlasMap, UnifiedAtlasMapRef } from "@/components/UnifiedAtlasMap";
 import { TimelineSlider } from "@/components/TimelineSlider";
 import { GlobeSearch } from "@/components/GlobeSearch";
 import { TripDrawer } from "@/components/TripDrawer";
-import { UploadModal } from "@/components/UploadModal";
+import { BulkUploadStudioModal } from "@/components/BulkUploadStudioModal";
+import { SpotDetailsModal } from "@/components/SpotDetailsModal";
 import { AdminUsersModal } from "@/components/AdminUsersModal";
 import { AdminAnalyticsModal } from "@/components/AdminAnalyticsModal";
 import { EditTripModal } from "@/components/EditTripModal";
@@ -17,7 +17,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { VirtualPassportModal } from "@/components/VirtualPassportModal";
 import { AtlasWrappedModal } from "@/components/AtlasWrappedModal";
 import { AccessRestrictedModal } from "@/components/AccessRestrictedModal";
-import { SafeUser, TripData, PhotoData } from "@/lib/types";
+import { SafeUser, TripData, PhotoData, SpotPinData } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/context";
 import { Star, Shield, Heart, Eye } from "lucide-react";
 
@@ -26,7 +26,7 @@ export default function HomePage() {
   const [trips, setTrips] = useState<TripData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // View Mode: 'gallery' (CSS Nectar Showcase with Random Travel & Cosmic Distance), 'sphere' (True 3D Earth Globe), 'flat' (Detailed Map)
+  // View Mode: 'gallery' (CSS Nectar Showcase) vs 'sphere' (Unified Terra 3D with seamless street 2D zoom)
   const [viewMode, setViewMode] = useState<ViewMode>("gallery");
 
   // Filters state
@@ -38,6 +38,7 @@ export default function HomePage() {
   // Drawer & Selection state
   const [selectedTrip, setSelectedTrip] = useState<TripData | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoData | null>(null);
+  const [selectedSpot, setSelectedSpot] = useState<SpotPinData | null>(null);
 
   // Modals state
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -63,15 +64,10 @@ export default function HomePage() {
     errorCode: null,
   });
 
-  const globe3DRef = useRef<Globe3DRef>(null);
-  const globeMapRef = useRef<GlobeMapRef>(null);
+  const unifiedMapRef = useRef<UnifiedAtlasMapRef>(null);
 
-  const handleFlyTo = (lat: number, lon: number) => {
-    if (viewMode === "sphere") {
-      globe3DRef.current?.flyToLocation(lat, lon, 0.4);
-    } else {
-      globeMapRef.current?.flyToLocation(lat, lon, 12);
-    }
+  const handleFlyTo = (lat: number, lon: number, zoomLevel?: number) => {
+    unifiedMapRef.current?.flyToLocation(lat, lon, zoomLevel);
   };
 
   const handleSelectViewMode = (mode: ViewMode) => {
@@ -79,9 +75,7 @@ export default function HomePage() {
     setA11yNotice(
       mode === "gallery"
         ? "Comutat la galeria Showcase stil CSS Nectar cu Odometru Cosmic"
-        : mode === "sphere"
-        ? "Comutat la globul 3D interactiv Terra"
-        : "Comutat la harta detaliată a expedițiilor"
+        : "Comutat la globul 3D interactiv Terra cu zoom fluid pe străzi"
     );
   };
 
@@ -464,7 +458,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Main View: CSS Nectar Showcase Gallery vs 3D Globe vs Detailed Flat Map */}
+      {/* Main View: CSS Nectar Showcase Gallery vs Unified 3D/2D Atlas Map */}
       {viewMode === "gallery" ? (
         <div className="w-full h-full overflow-y-auto">
           <CssNectarShowcase
@@ -475,7 +469,7 @@ export default function HomePage() {
             }}
             onFlyToLocation={(lat, lon) => {
               setViewMode("sphere");
-              setTimeout(() => handleFlyTo(lat, lon), 250);
+              setTimeout(() => handleFlyTo(lat, lon, 14), 250);
             }}
             currentUser={currentUser}
             onOpenTravelPlanner={() => setIsTravelPlannerOpen(true)}
@@ -483,22 +477,14 @@ export default function HomePage() {
             onOpenWrapped={() => setIsWrappedOpen(true)}
           />
         </div>
-      ) : viewMode === "sphere" ? (
-        <Globe3D
-          ref={globe3DRef}
-          trips={trips}
-          filteredPhotos={filteredPhotos}
-          onSelectPhoto={handleSelectPhoto}
-          selectedPhoto={selectedPhoto}
-          showScratchMap={showScratchMap}
-          onToggleScratchMap={() => setShowScratchMap(!showScratchMap)}
-        />
       ) : (
-        <GlobeMap
-          ref={globeMapRef}
+        <UnifiedAtlasMap
+          ref={unifiedMapRef}
           trips={trips}
           filteredPhotos={filteredPhotos}
+          currentUser={currentUser}
           onSelectPhoto={handleSelectPhoto}
+          onSelectSpot={(spot) => setSelectedSpot(spot)}
           selectedPhoto={selectedPhoto}
           showScratchMap={showScratchMap}
           onToggleScratchMap={() => setShowScratchMap(!showScratchMap)}
@@ -553,6 +539,22 @@ export default function HomePage() {
         onFlyToPhoto={handleFlyTo}
       />
 
+      {/* Spot Details Lightbox Modal (Physical Spots with Multi-Tier Filters) */}
+      <SpotDetailsModal
+        spot={selectedSpot}
+        isOpen={Boolean(selectedSpot)}
+        onClose={() => setSelectedSpot(null)}
+        trips={trips}
+        currentUser={currentUser}
+        onOpenTripDrawer={(trip, photo) => {
+          setSelectedTrip(trip);
+          if (photo) {
+            setSelectedPhoto(photo);
+          }
+          setSelectedSpot(null);
+        }}
+      />
+
       {/* Travel Assist Planner Modal (Gemini AI) */}
       {isTravelPlannerOpen && (
         <TravelPlannerModal
@@ -561,28 +563,20 @@ export default function HomePage() {
             setTrips((prev) => [newTrip, ...prev]);
             setSelectedTrip(newTrip);
             if (newTrip.latitude && newTrip.longitude) {
-              if (viewMode === "sphere") {
-                globe3DRef.current?.flyToLocation(newTrip.latitude, newTrip.longitude, 0.6);
-              } else {
-                globeMapRef.current?.flyToLocation(newTrip.latitude, newTrip.longitude, 6);
-              }
+              unifiedMapRef.current?.flyToLocation(newTrip.latitude, newTrip.longitude, 10);
             }
           }}
         />
       )}
 
-      {/* Admin Photo Manager & Studio Modal */}
+      {/* Redesigned Split-Screen Bulk Upload Studio Modal */}
       {isUploadOpen && (
-        <UploadModal
+        <BulkUploadStudioModal
           isOpen={isUploadOpen}
           onClose={() => setIsUploadOpen(false)}
           onTripCreated={() => {
             fetchTrips();
-            if (viewMode === "sphere") {
-              globe3DRef.current?.resetView();
-            } else {
-              globeMapRef.current?.resetView();
-            }
+            unifiedMapRef.current?.resetView();
           }}
         />
       )}

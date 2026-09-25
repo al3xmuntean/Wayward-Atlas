@@ -134,32 +134,17 @@ export function Navbar({
             >
               <button
                 role="tab"
-                aria-selected={viewMode === "sphere"}
+                aria-selected={viewMode !== "gallery"}
                 aria-label={t("nav.sphere")}
                 onClick={() => onSelectViewMode("sphere")}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  viewMode === "sphere"
+                  viewMode !== "gallery"
                     ? "bg-olive-700 text-white dark:bg-olive-600 shadow-sm"
                     : "text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-olive-500/10"
                 }`}
               >
                 <Globe2 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{t("nav.sphere")}</span>
-              </button>
-
-              <button
-                role="tab"
-                aria-selected={viewMode === "flat"}
-                aria-label={t("nav.flat")}
-                onClick={() => onSelectViewMode("flat")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  viewMode === "flat"
-                    ? "bg-olive-700 text-white dark:bg-olive-600 shadow-sm"
-                    : "text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-olive-500/10"
-                }`}
-              >
-                <MapIcon className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{t("nav.flat")}</span>
+                <span>Terra 3D</span>
               </button>
 
               <button
@@ -174,7 +159,7 @@ export function Navbar({
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{t("nav.gallery")}</span>
+                <span>Showcase</span>
               </button>
             </nav>
           </div>
@@ -489,34 +474,21 @@ export function Navbar({
         >
           <button
             onClick={() => onSelectViewMode("sphere")}
-            aria-pressed={viewMode === "sphere"}
-            className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
-              viewMode === "sphere"
+            aria-pressed={viewMode !== "gallery"}
+            className={`flex flex-col items-center justify-center px-4 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
+              viewMode !== "gallery"
                 ? "bg-olive-700 text-white shadow-xs"
                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             <Globe2 className="w-4 h-4 mb-0.5" aria-hidden="true" />
-            <span>3D</span>
-          </button>
-
-          <button
-            onClick={() => onSelectViewMode("flat")}
-            aria-pressed={viewMode === "flat"}
-            className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
-              viewMode === "flat"
-                ? "bg-olive-700 text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <MapIcon className="w-4 h-4 mb-0.5" aria-hidden="true" />
-            <span>Hartă</span>
+            <span>Terra 3D</span>
           </button>
 
           <button
             onClick={() => onSelectViewMode("gallery")}
             aria-pressed={viewMode === "gallery"}
-            className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
+            className={`flex flex-col items-center justify-center px-4 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
               viewMode === "gallery"
                 ? "bg-olive-700 text-white shadow-xs"
                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
@@ -592,37 +564,21 @@ export function Navbar({
               <span className="text-[11px] font-bold text-olive-800 dark:text-olive-300 uppercase tracking-wider block">
                 Moduri de Explorare
               </span>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button
-                  aria-pressed={viewMode === "sphere"}
+                  aria-pressed={viewMode !== "gallery"}
                   onClick={() => {
                     onSelectViewMode("sphere");
                     setIsMobileMenuOpen(false);
                   }}
                   className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border text-xs font-bold transition-all ${
-                    viewMode === "sphere"
+                    viewMode !== "gallery"
                       ? "bg-olive-700 text-white border-olive-600 shadow-sm"
                       : "glass-panel border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   <Globe2 className="w-4 h-4 mb-1 text-olive-500" aria-hidden="true" />
-                  <span>Terra 3D</span>
-                </button>
-
-                <button
-                  aria-pressed={viewMode === "flat"}
-                  onClick={() => {
-                    onSelectViewMode("flat");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border text-xs font-bold transition-all ${
-                    viewMode === "flat"
-                      ? "bg-olive-700 text-white border-olive-600 shadow-sm"
-                      : "glass-panel border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
-                  }`}
-                >
-                  <MapIcon className="w-4 h-4 mb-1 text-olive-500" aria-hidden="true" />
-                  <span>Hartă 2D</span>
+                  <span>Terra 3D & Stradal</span>
                 </button>
 
                 <button
@@ -638,7 +594,7 @@ export function Navbar({
                   }`}
                 >
                   <LayoutGrid className="w-4 h-4 mb-1 text-olive-500" aria-hidden="true" />
-                  <span>Showcase</span>
+                  <span>Showcase & Retrospectivă</span>
                 </button>
               </div>
             </div>

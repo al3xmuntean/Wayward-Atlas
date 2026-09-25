@@ -42,3 +42,7 @@ prisma/dev.db-journal
 # public uploads (keep folder, ignore user uploads)
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# cloudflared binary
+cloudflared.exe
+
