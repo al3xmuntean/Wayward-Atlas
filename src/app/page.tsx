@@ -9,6 +9,7 @@ import { GlobeSearch } from "@/components/GlobeSearch";
 import { TripDrawer } from "@/components/TripDrawer";
 import { UploadModal } from "@/components/UploadModal";
 import { AdminUsersModal } from "@/components/AdminUsersModal";
+import { AdminAnalyticsModal } from "@/components/AdminAnalyticsModal";
 import { EditTripModal } from "@/components/EditTripModal";
 import { TravelPlannerModal } from "@/components/TravelPlannerModal";
 import { CssNectarShowcase } from "@/components/CssNectarShowcase";
@@ -46,6 +47,7 @@ export default function HomePage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPassportOpen, setIsPassportOpen] = useState(false);
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState<TripData | null>(null);
   const [a11yNotice, setA11yNotice] = useState<string>("");
   const { t } = useTranslation();
@@ -81,6 +83,36 @@ export default function HomePage() {
         ? "Comutat la globul 3D interactiv Terra"
         : "Comutat la harta detaliată a expedițiilor"
     );
+  };
+
+  // Track photo views in background for analytics
+  const lastViewedPhotoIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedPhoto?.id) return;
+    if (selectedPhoto.id.startsWith("planned-")) return;
+    if (lastViewedPhotoIdRef.current === selectedPhoto.id) return;
+    lastViewedPhotoIdRef.current = selectedPhoto.id;
+
+    fetch(`/api/photos/${selectedPhoto.id}/view`, {
+      method: "POST",
+    }).catch((err) => {
+      console.warn("Analytics ping error:", err);
+    });
+  }, [selectedPhoto?.id]);
+
+  const handleAnalyticsSelectPhoto = (photoId: string, tripId: string) => {
+    const trip = trips.find((t) => t.id === tripId);
+    if (trip) {
+      const photo = trip.photos.find((p) => p.id === photoId);
+      if (photo) {
+        setSelectedTrip(trip);
+        setSelectedPhoto(photo);
+        setIsAnalyticsOpen(false);
+        if (photo.latitude && photo.longitude) {
+          handleFlyTo(photo.latitude, photo.longitude);
+        }
+      }
+    }
   };
 
 
@@ -393,6 +425,7 @@ export default function HomePage() {
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onOpenPassport={() => setIsPassportOpen(true)}
         onOpenWrapped={() => setIsWrappedOpen(true)}
+        onOpenAnalytics={() => setIsAnalyticsOpen(true)}
         tripsCount={trips.length}
         photosCount={totalPhotosCount}
         viewMode={viewMode}
@@ -559,6 +592,15 @@ export default function HomePage() {
         <AdminUsersModal
           isOpen={isUsersModalOpen}
           onClose={() => setIsUsersModalOpen(false)}
+        />
+      )}
+
+      {/* Admin Analytics & Visitor Tracking Modal */}
+      {isAnalyticsOpen && (
+        <AdminAnalyticsModal
+          isOpen={isAnalyticsOpen}
+          onClose={() => setIsAnalyticsOpen(false)}
+          onSelectPhoto={handleAnalyticsSelectPhoto}
         />
       )}
 

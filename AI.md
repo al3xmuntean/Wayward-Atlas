@@ -213,3 +213,27 @@ npm run dev
 # Run Docker production container
 docker compose up -d --build
 ```
+
+---
+
+## 10. Admin Analytics & Visitor Tracking Engine
+
+Wayward Atlas incorporates a privacy-conscious, real-time analytics module for tracking distinct photo views, visitor IP locations, and country distributions.
+
+- **Model**: `PhotoView` in `prisma/schema.prisma` (`photoId`, `ip`, `country`, `countryCode`, `city`, `userAgent`, `createdAt`).
+- **Geo & IP Detection**: `src/lib/geoUtils.ts` extracts authentic visitor IPs and countries with priority:
+  - `cf-connecting-ip` & `cf-ipcountry` (Cloudflare Tunnel zero-latency accuracy)
+  - `x-forwarded-for` / `x-real-ip` fallbacks
+- **Anti-Spam Debounce**: Automated 10-minute debounce per IP per photo prevents artificial view inflation from rapid clicks or page re-renders.
+- **API Endpoints**:
+  - `POST /api/photos/[id]/view`: Public lightweight endpoint recording view telemetry.
+  - `GET /api/admin/analytics`: Secured with `requireAdmin()`. Supports filters:
+    - Time ranges: `24h`, `7d`, `30d`, `all`
+    - Sorting: `views_desc` (Cele mai vizualizate), `unique_desc` (Vizitatori unici), `views_asc`, `newest`, `title`
+    - Search: Instant filter by photo title, destination, or country name
+- **Aggregations & Metrics**:
+  - Global KPI cards: Total Vizualizări, Vizitatori Unici (`COUNT(DISTINCT ip)`), Imagini Active, Țara Principală.
+  - Photo breakdown: Total views, distinct IP visitors, top country flags, thumbnail preview, and click-to-fly map integration.
+  - Geographic distribution: Grouped by country with ISO flag emojis, total views, unique visitors, and percentage progress bars.
+  - IP access log: Chronological audit trail showing IP address, country badge, timestamp, and viewed photo.
+

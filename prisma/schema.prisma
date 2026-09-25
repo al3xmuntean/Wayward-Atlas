@@ -69,6 +69,7 @@ model Photo {
   isCountryCover     Boolean       @default(false) // Single designated showcase image for this country in Public mode
   partnerPreselected Boolean       @default(false) // Auto-detected or marked couple/partner memory
   tags               String        @default("[]") // JSON string: ["beach", "sunset", "mountain"]
+  views              PhotoView[]
   createdAt          DateTime      @default(now())
 }
 
@@ -91,3 +92,21 @@ model Comment {
   trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model PhotoView {
+  id          String   @id @default(uuid())
+  photoId     String
+  photo       Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  ip          String   // Visitor IP
+  country     String?  // Country name (e.g. "România", "Italia")
+  countryCode String?  // 2-letter ISO (e.g. "RO", "IT")
+  city        String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([photoId])
+  @@index([ip])
+  @@index([countryCode])
+  @@index([createdAt])
+}
+

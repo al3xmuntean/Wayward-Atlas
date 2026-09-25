@@ -23,6 +23,7 @@ import {
   Eye,
   Award,
   Gift,
+  BarChart3,
 } from "lucide-react";
 import { SafeUser } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
@@ -40,6 +41,7 @@ interface NavbarProps {
   onOpenAuthModal: () => void;
   onOpenPassport?: () => void;
   onOpenWrapped?: () => void;
+  onOpenAnalytics?: () => void;
   tripsCount: number;
   photosCount: number;
   viewMode: ViewMode;
@@ -55,6 +57,7 @@ export function Navbar({
   onOpenAuthModal,
   onOpenPassport,
   onOpenWrapped,
+  onOpenAnalytics,
   tripsCount,
   photosCount,
   viewMode,
@@ -333,6 +336,20 @@ export function Navbar({
                       >
                         <Users className="w-4 h-4 text-olive-600 dark:text-olive-400" aria-hidden="true" />
                         <span>Gestiune Roluri & Permisiuni</span>
+                      </button>
+                    )}
+
+                    {user.role === "ADMIN" && onOpenAnalytics && (
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          onOpenAnalytics();
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-olive-500/15 hover:text-olive-800 dark:hover:text-olive-300 transition-colors text-left"
+                      >
+                        <BarChart3 className="w-4 h-4 text-olive-600 dark:text-olive-400" aria-hidden="true" />
+                        <span>Statistici & Analytics</span>
                       </button>
                     )}
 
@@ -730,6 +747,22 @@ export function Navbar({
                       <div>
                         <p className="text-xs font-bold">Utilizatori</p>
                         <p className="text-[9px] text-slate-500 dark:text-slate-400">Roluri RBAC</p>
+                      </div>
+                    </button>
+                  )}
+
+                  {user.role === "ADMIN" && onOpenAnalytics && (
+                    <button
+                      onClick={() => {
+                        onOpenAnalytics();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2 p-3 rounded-2xl glass-panel border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs font-bold active:scale-95 transition-all text-left"
+                    >
+                      <BarChart3 className="w-4 h-4 text-olive-600 dark:text-olive-400 shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-xs font-bold">Analytics</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400">Vizualizări & IP-uri</p>
                       </div>
                     </button>
                   )}

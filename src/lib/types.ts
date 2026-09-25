@@ -146,3 +146,55 @@ export interface AILocationSuggestion {
   source: "local-llm" | "nominatim" | "heuristic";
   reasoning?: string;
 }
+
+export interface PhotoCountryStat {
+  countryCode: string;
+  country: string;
+  flag: string;
+  count: number;
+}
+
+export interface PhotoAnalyticsItem {
+  id: string;
+  tripId: string;
+  url: string;
+  thumbnailUrl: string;
+  placeName: string | null;
+  country: string | null;
+  tripTitle: string;
+  totalViews: number;
+  distinctViews: number;
+  lastViewedAt: string | null;
+  topCountries: PhotoCountryStat[];
+}
+
+export interface IpAnalyticsItem {
+  ip: string;
+  country: string | null;
+  countryCode: string | null;
+  flag: string;
+  totalViews: number;
+  distinctPhotosCount: number;
+  lastSeenAt: string;
+  photoTitles: string[];
+}
+
+export interface CountryAnalyticsItem {
+  country: string;
+  countryCode: string;
+  flag: string;
+  totalViews: number;
+  uniqueIpsCount: number;
+  percentage: number;
+}
+
+export interface AnalyticsSummary {
+  totalViews: number;
+  distinctVisitorsCount: number;
+  totalPhotosTracked: number;
+  topCountry: { name: string; flag: string; views: number } | null;
+  photos: PhotoAnalyticsItem[];
+  ipLogs: IpAnalyticsItem[];
+  countryStats: CountryAnalyticsItem[];
+}
+
