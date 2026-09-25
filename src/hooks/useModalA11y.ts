@@ -23,32 +23,45 @@ export function useModalA11y({
   initialFocusRef,
 }: UseModalA11yOptions) {
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const hasFocusedRef = useRef(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    onCloseRef.current = onClose;
+  });
 
-    // Save previously focused element to restore upon closing
-    previousActiveElement.current = document.activeElement as HTMLElement | null;
+  useEffect(() => {
+    if (!isOpen) {
+      hasFocusedRef.current = false;
+      return;
+    }
 
-    // Focus initial element or first focusable element in dialog
-    const timer = setTimeout(() => {
-      if (initialFocusRef?.current) {
-        initialFocusRef.current.focus();
-      } else if (modalRef.current) {
-        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-        if (focusableElements.length > 0) {
-          focusableElements[0].focus();
-        } else {
-          modalRef.current.focus();
+    // Save previously focused element once upon opening
+    if (!hasFocusedRef.current) {
+      previousActiveElement.current = document.activeElement as HTMLElement | null;
+
+      // Focus initial element or first focusable element ONLY once when opening!
+      const timer = setTimeout(() => {
+        if (initialFocusRef?.current) {
+          initialFocusRef.current.focus();
+        } else if (modalRef.current) {
+          const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+          if (focusableElements.length > 0) {
+            focusableElements[0].focus();
+          } else {
+            modalRef.current.focus();
+          }
         }
-      }
-    }, 50);
+      }, 50);
+
+      hasFocusedRef.current = true;
+    }
 
     // Keyboard listener for Escape key and Focus Trap (Tab / Shift+Tab)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -90,12 +103,11 @@ export function useModalA11y({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = originalOverflow;
-      clearTimeout(timer);
 
       // Restore focus to previous element
       if (previousActiveElement.current && typeof previousActiveElement.current.focus === "function") {
         previousActiveElement.current.focus();
       }
     };
-  }, [isOpen, onClose, modalRef, initialFocusRef]);
+  }, [isOpen, modalRef, initialFocusRef]);
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import maplibregl from "maplibre-gl";
-import exifr from "exifr";
+import { extractPhotoMetadata } from "@/lib/exif";
 import {
   X,
   Upload,
@@ -158,7 +158,7 @@ export function BulkUploadStudioModal({
   // Safe Close Handlers - Prevent Accidental Loss of Uploads / Work
   const handleClosePrompt = () => {
     if (photos.length > 0 || title.trim().length > 0) {
-      if (window.confirm("Sigur dorești să închizi fereastra? Progresul tău este păstrat în memorie până finalizezi sau apeși pe Anulează.")) {
+      if (window.confirm(t("studio.closePrompt"))) {
         onClose();
       }
     } else {
@@ -168,7 +168,7 @@ export function BulkUploadStudioModal({
 
   const handleCancel = () => {
     if (photos.length > 0 || title.trim().length > 0) {
-      if (window.confirm("Sigur dorești să anulezi? Toate fotografiile și datele introduse vor fi șterse.")) {
+      if (window.confirm(t("studio.cancelPrompt"))) {
         resetForm();
         onClose();
       }
@@ -375,21 +375,10 @@ export function BulkUploadStudioModal({
       let takenAt = new Date().toISOString();
 
       try {
-        const exifData = await exifr.parse(file, [
-          "latitude",
-          "longitude",
-          "DateTimeOriginal",
-          "CreateDate",
-        ]);
-
-        if (exifData?.latitude && exifData?.longitude) {
-          lat = Number(exifData.latitude);
-          lon = Number(exifData.longitude);
-        }
-        if (exifData?.DateTimeOriginal || exifData?.CreateDate) {
-          const d = new Date(exifData.DateTimeOriginal || exifData.CreateDate);
-          if (!isNaN(d.getTime())) takenAt = d.toISOString();
-        }
+        const meta = await extractPhotoMetadata(file);
+        lat = meta.latitude;
+        lon = meta.longitude;
+        takenAt = meta.takenAt;
       } catch (err) {
         console.warn("Could not parse EXIF for file:", file.name, err);
       }
@@ -805,7 +794,7 @@ export function BulkUploadStudioModal({
               <Upload className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="bulk-studio-title" className="text-base sm:text-lg font-bold">Studio Curare & Upload Spatial</h2>
+              <h2 id="bulk-studio-title" className="text-base sm:text-lg font-bold">{t("studio.createTitle")}</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {photos.length} fotografii • {spots.length} puncte pe hartă
               </p>
@@ -815,11 +804,11 @@ export function BulkUploadStudioModal({
           <div className="flex items-center gap-3">
             <button
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Adaugă imagini prin încărcare multiplă"
+              aria-label={t("studio.addPhotosBtn")}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold transition-all shadow-md active:scale-95 focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Adaugă Imagini (Multi-Drop)</span>
+              <span>{t("studio.addPhotosBtn")}</span>
             </button>
             <input
               ref={fileInputRef}
@@ -851,7 +840,7 @@ export function BulkUploadStudioModal({
             <div className="space-y-3 p-4 rounded-2xl bg-olive-50/70 dark:bg-olive-950/30 border border-olive-200 dark:border-olive-500/25">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-olive-800 dark:text-olive-300">
-                  Date Călătorie & Album
+                  {t("studio.tripSection")}
                 </span>
 
                 {/* Multilingual Selector */}
@@ -878,15 +867,15 @@ export function BulkUploadStudioModal({
                 <>
                   <input
                     type="text"
-                    aria-label="Titlul călătoriei"
-                    placeholder="Titlu Călătorie (ex: Expediție Toscana & Coasta Amalfi)..."
+                    aria-label={t("studio.titleLabel")}
+                    placeholder={t("studio.titlePlaceholder")}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-olive-500"
                   />
                   <textarea
                     aria-label="Descriere generală călătorie"
-                    placeholder="Descriere generală sau notițe..."
+                    placeholder={t("studio.descPlaceholder")}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={2}

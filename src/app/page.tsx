@@ -413,7 +413,7 @@ export default function HomePage() {
       <Navbar
         user={currentUser}
         onLogout={handleLogout}
-        onOpenUpload={() => setIsUploadOpen(true)}
+        onOpenUpload={() => window.open("/manage/trip/new", "_blank")}
         onOpenUsersModal={() => setIsUsersModalOpen(true)}
         onOpenTravelPlanner={() => setIsTravelPlannerOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -527,13 +527,12 @@ export default function HomePage() {
         onAddComment={handleAddComment}
         onDeleteTrip={handleDeleteTrip}
         onEditTrip={(trip) => {
-          setEditingTrip(trip);
-          setIsEditModalOpen(true);
+          window.open(`/manage/trip/${trip.id}`, "_blank");
         }}
         onPhotoUpdated={handlePhotoUpdated}
         onTripUpdated={handleTripUpdated}
         onOpenUploadForTrip={(trip) => {
-          setIsUploadOpen(true);
+          window.open(`/manage/trip/${trip.id}`, "_blank");
         }}
         onTagClick={(tag) => setSearchQuery(tag)}
         onFlyToPhoto={handleFlyTo}

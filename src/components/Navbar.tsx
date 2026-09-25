@@ -24,7 +24,9 @@ import {
   Award,
   Gift,
   BarChart3,
+  Compass,
 } from "lucide-react";
+import Link from "next/link";
 import { SafeUser } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
 import { useTranslation } from "@/lib/i18n/context";
@@ -207,16 +209,18 @@ export function Navbar({
               </button>
             )}
 
-            {/* Admin Upload / Add Trip Button */}
-            {user && user.role === "ADMIN" && (
-              <button
-                onClick={onOpenUpload}
+            {/* Admin / Partner Add Trip Button (Dedicated Full-Page Studio) */}
+            {user && (user.role === "ADMIN" || user.role === "PARTNER") && (
+              <a
+                href="/manage/trip/new"
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={t("nav.addTrip")}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs text-white bg-olive-700 hover:bg-olive-800 dark:bg-olive-600 dark:hover:bg-olive-500 transition-all shadow-xs hover:scale-105"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{t("nav.addTrip")}</span>
-              </button>
+              </a>
             )}
 
             {/* Language Selector */}
@@ -291,15 +295,28 @@ export function Navbar({
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
                     </div>
 
-                    {user.role === "ADMIN" && (
-                      <button
-                        role="menuitem"
-                        onClick={onOpenUpload}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-olive-500/15 hover:text-olive-800 dark:hover:text-olive-300 transition-colors text-left"
-                      >
-                        <Plus className="w-4 h-4 text-olive-600 dark:text-olive-400" aria-hidden="true" />
-                        <span>Manager Studio (Upload)</span>
-                      </button>
+                    {(user.role === "ADMIN" || user.role === "PARTNER") && (
+                      <>
+                        <Link
+                          role="menuitem"
+                          href="/manage"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-olive-500/15 hover:text-olive-800 dark:hover:text-olive-300 transition-colors text-left"
+                        >
+                          <Compass className="w-4 h-4 text-olive-600 dark:text-olive-400" aria-hidden="true" />
+                          <span>{t("manager.title")}</span>
+                        </Link>
+
+                        <a
+                          role="menuitem"
+                          href="/manage/trip/new"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-olive-500/15 hover:text-olive-800 dark:hover:text-olive-300 transition-colors text-left"
+                        >
+                          <Plus className="w-4 h-4 text-olive-600 dark:text-olive-400" aria-hidden="true" />
+                          <span>{t("manager.newTripBtn")} (Tab Nou)</span>
+                        </a>
+                      </>
                     )}
 
                     {(user.role === "ADMIN" || user.role === "PARTNER") && (

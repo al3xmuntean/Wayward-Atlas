@@ -160,6 +160,8 @@ export async function PATCH(
       withPartner,
       partnerNotes,
       translations,
+      latitude,
+      longitude,
     } = body;
 
     const updateData: any = {};
@@ -219,6 +221,9 @@ export async function PATCH(
       updateData.partnerNotes = typeof partnerNotes === "string" ? partnerNotes.trim() : null;
     }
 
+    if (latitude !== undefined) updateData.latitude = latitude !== null ? Number(latitude) : null;
+    if (longitude !== undefined) updateData.longitude = longitude !== null ? Number(longitude) : null;
+
     if (translations !== undefined) {
       updateData.translations = typeof translations === "string" ? translations : translations ? JSON.stringify(translations) : null;
     }
@@ -228,7 +233,72 @@ export async function PATCH(
       data: updateData,
     });
 
-    return NextResponse.json({ success: true, trip: updatedTrip });
+    // 1. Delete removed photos if specified
+    if (Array.isArray(body.deletedPhotoIds) && body.deletedPhotoIds.length > 0) {
+      await prisma.photo.deleteMany({
+        where: {
+          id: { in: body.deletedPhotoIds },
+          tripId: id,
+        },
+      });
+    }
+
+    // 2. Update existing photos (spots, roles, coords)
+    if (Array.isArray(body.updatedPhotos) && body.updatedPhotos.length > 0) {
+      for (const up of body.updatedPhotos) {
+        if (!up.id) continue;
+        await prisma.photo.update({
+          where: { id: up.id },
+          data: {
+            ...(up.spotName !== undefined && { spotName: up.spotName }),
+            ...(up.spotDescription !== undefined && { spotDescription: up.spotDescription }),
+            ...(up.latitude !== undefined && { latitude: Number(up.latitude) }),
+            ...(up.longitude !== undefined && { longitude: Number(up.longitude) }),
+            ...(up.minRole !== undefined && { minRole: up.minRole }),
+            ...(up.isPrivate !== undefined && { isPrivate: Boolean(up.isPrivate) }),
+            ...(up.hasPeople !== undefined && { hasPeople: Boolean(up.hasPeople) }),
+            ...(up.caption !== undefined && { caption: up.caption }),
+          },
+        });
+      }
+    }
+
+    // 3. Insert newly uploaded photos if specified
+    if (Array.isArray(body.newPhotos) && body.newPhotos.length > 0) {
+      await prisma.photo.createMany({
+        data: body.newPhotos.map((p: any) => ({
+          tripId: id,
+          url: p.url,
+          thumbnailUrl: p.thumbnailUrl || p.url,
+          latitude: Number(p.latitude) || 0,
+          longitude: Number(p.longitude) || 0,
+          placeName: p.placeName || null,
+          city: p.city || null,
+          country: p.country || null,
+          spotName: p.spotName || null,
+          spotDescription: p.spotDescription || null,
+          caption: p.caption || null,
+          originalUrl: p.originalUrl || null,
+          takenAt: p.takenAt ? new Date(p.takenAt) : new Date(),
+          hasPeople: Boolean(p.hasPeople),
+          isPrivate: Boolean(p.isPrivate),
+          minRole: p.minRole || "VIEWER",
+          isCountryCover: Boolean(p.isCountryCover),
+          partnerPreselected: Boolean(p.partnerPreselected),
+          tags: JSON.stringify(p.tags || []),
+        })),
+      });
+    }
+
+    // Fetch refreshed trip with all updated photos
+    const refreshedTrip = await prisma.trip.findUnique({
+      where: { id },
+      include: {
+        photos: { orderBy: { takenAt: "asc" } },
+      },
+    });
+
+    return NextResponse.json({ success: true, trip: refreshedTrip || updatedTrip });
   } catch (error) {
     console.error("Update trip error:", error);
     return NextResponse.json({ error: "Failed to update trip information" }, { status: 500 });
