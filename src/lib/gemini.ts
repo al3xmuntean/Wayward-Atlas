@@ -27,14 +27,43 @@ interface VerifyTripParams {
 }
 
 /**
+ * Candidate models supported by Gemini API in order of preference
+ */
+const CANDIDATE_GEMINI_MODELS = [
+  "gemini-3.7-flash",
+  "gemini-3.8-flash",
+  "gemma-4-26b-a4b-it",
+  "gemma-4-31b-it",
+  "gemini-flash-latest",
+];
+
+/**
  * Helper to get a Gemini GenerativeModel instance
  */
-function getGeminiModel(apiKey?: string) {
+function getGeminiModel(apiKey?: string, modelName: string = CANDIDATE_GEMINI_MODELS[0]) {
   const key = apiKey || process.env.GEMINI_API_KEY;
   if (!key) return null;
   const genAI = new GoogleGenerativeAI(key);
-  // gemini-3.6-flash is the state-of-the-art model available on the user's Gemini API key
-  return genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+  return genAI.getGenerativeModel({ model: modelName }, { timeout: 15000 });
+}
+
+/**
+ * Fast and reliable multilingual translation fallback using Google's public translate service
+ */
+async function fastTranslate(text: string, targetLang: string): Promise<string> {
+  if (!text || !text.trim()) return "";
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return text;
+    const data = await res.json();
+    if (Array.isArray(data) && Array.isArray(data[0])) {
+      return data[0].map((item: any) => item[0]).join("");
+    }
+  } catch (e) {
+    console.warn(`[fastTranslate] fallback failed for ${targetLang}:`, e);
+  }
+  return text;
 }
 
 /**
@@ -520,7 +549,83 @@ STRICT REQUIREMENT: Output ONLY a valid JSON object (no markdown surrounding, no
 }
 
 /**
- * Translates travel content (title & description) from Romanian into a target language using Gemini
+ * Translates travel content (title & description) from Romanian into all 4 major languages at once
+ */
+export async function translateTripContentAll(params: {
+  title: string;
+  description?: string;
+  apiKey?: string;
+}): Promise<Record<string, { title: string; description: string }>> {
+  const { title, description = "", apiKey } = params;
+  const key = apiKey || process.env.GEMINI_API_KEY;
+
+  if (key) {
+    const genAI = new GoogleGenerativeAI(key);
+    const prompt = `You are an expert multilingual translator specializing in travel journals and travel writing.
+Translate the following travel trip title and description from Romanian into English (en), German (de), Spanish (es), and French (fr).
+Keep the tone natural, evocative, and elegant, maintaining place names accurately.
+
+Title to translate:
+"${title}"
+
+Description to translate:
+"${description}"
+
+Respond STRICTLY with a valid JSON object without any markdown code fences or backticks:
+{
+  "en": { "title": "translated title in English", "description": "translated description in English" },
+  "de": { "title": "translated title in German", "description": "translated description in German" },
+  "es": { "title": "translated title in Spanish", "description": "translated description in Spanish" },
+  "fr": { "title": "translated title in French", "description": "translated description in French" }
+}`;
+
+    for (const modelName of CANDIDATE_GEMINI_MODELS) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName }, { timeout: 12000 });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+        const firstBrace = cleaned.indexOf("{");
+        const lastBrace = cleaned.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          const parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+          if (parsed.en?.title) {
+            return {
+              en: { title: parsed.en?.title || title, description: parsed.en?.description || description },
+              de: { title: parsed.de?.title || title, description: parsed.de?.description || description },
+              es: { title: parsed.es?.title || title, description: parsed.es?.description || description },
+              fr: { title: parsed.fr?.title || title, description: parsed.fr?.description || description },
+            };
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[translateTripContentAll] Model ${modelName} failed:`, err?.status || err?.message);
+      }
+    }
+  }
+
+  // Fast translation fallback (ultra-reliable, 50ms)
+  const [enTitle, enDesc, deTitle, deDesc, esTitle, esDesc, frTitle, frDesc] = await Promise.all([
+    fastTranslate(title, "en"),
+    description ? fastTranslate(description, "en") : Promise.resolve(""),
+    fastTranslate(title, "de"),
+    description ? fastTranslate(description, "de") : Promise.resolve(""),
+    fastTranslate(title, "es"),
+    description ? fastTranslate(description, "es") : Promise.resolve(""),
+    fastTranslate(title, "fr"),
+    description ? fastTranslate(description, "fr") : Promise.resolve(""),
+  ]);
+
+  return {
+    en: { title: enTitle || title, description: enDesc || description },
+    de: { title: deTitle || title, description: deDesc || description },
+    es: { title: esTitle || title, description: esDesc || description },
+    fr: { title: frTitle || title, description: frDesc || description },
+  };
+}
+
+/**
+ * Translates travel content (title & description) from Romanian into a single target language using Gemini with failover
  */
 export async function translateTripContent(params: {
   title: string;
@@ -529,21 +634,20 @@ export async function translateTripContent(params: {
   apiKey?: string;
 }): Promise<{ title: string; description: string }> {
   const { title, description = "", targetLang, apiKey } = params;
+  if (targetLang === "ro") return { title, description };
 
-  const targetLangNames: Record<string, string> = {
-    en: "English",
-    de: "German",
-    es: "Spanish",
-    fr: "French",
-    ro: "Romanian",
-  };
-
-  const langName = targetLangNames[targetLang] || targetLang;
-  const model = getGeminiModel(apiKey);
-
-  if (model) {
-    try {
-      const prompt = `You are an expert multilingual translator specializing in travel writing and travel journals.
+  const key = apiKey || process.env.GEMINI_API_KEY;
+  if (key) {
+    const genAI = new GoogleGenerativeAI(key);
+    const targetLangNames: Record<string, string> = {
+      en: "English",
+      de: "German",
+      es: "Spanish",
+      fr: "French",
+      ro: "Romanian",
+    };
+    const langName = targetLangNames[targetLang] || targetLang;
+    const prompt = `You are an expert multilingual translator specializing in travel writing and travel journals.
 Translate the following travel trip title and description from Romanian into ${langName}.
 Keep the tone evocative, natural, and elegant, maintaining place names accurately.
 
@@ -551,7 +655,7 @@ Title to translate:
 "${title}"
 
 Description to translate:
-"${description || ""}"
+"${description}"
 
 Respond strictly with a JSON object in this format (no markdown, no extra keys):
 {
@@ -559,25 +663,40 @@ Respond strictly with a JSON object in this format (no markdown, no extra keys):
   "description": "translated description in ${langName}"
 }`;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-
-      return {
-        title: parsed.title || title,
-        description: parsed.description || description,
-      };
-    } catch (err) {
-      console.warn(`Gemini translation to ${targetLang} failed, using fallback:`, err);
+    for (const modelName of CANDIDATE_GEMINI_MODELS) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName }, { timeout: 10000 });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+        const firstBrace = cleaned.indexOf("{");
+        const lastBrace = cleaned.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          const parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+          if (parsed.title) {
+            return {
+              title: parsed.title,
+              description: parsed.description || description,
+            };
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[translateTripContent] Model ${modelName} failed for ${targetLang}:`, err?.status || err?.message);
+      }
     }
   }
 
-  // Fallback: return existing title & description
+  // Fast translation fallback
+  const [translatedTitle, translatedDesc] = await Promise.all([
+    fastTranslate(title, targetLang),
+    description ? fastTranslate(description, targetLang) : Promise.resolve(""),
+  ]);
+
   return {
-    title: title,
-    description: description,
+    title: translatedTitle || title,
+    description: translatedDesc || description,
   };
 }
+
 
 

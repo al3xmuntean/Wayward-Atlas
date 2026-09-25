@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { translateTripContent } from "@/lib/gemini";
+import { translateTripContent, translateTripContentAll } from "@/lib/gemini";
 import { Language } from "@/lib/i18n/types";
 
 export const dynamic = "force-dynamic";
@@ -27,19 +27,10 @@ export async function POST(req: NextRequest) {
 
     // Translate to all 4 target languages at once
     if (all) {
-      const languages: Language[] = ["en", "de", "es", "fr"];
-      const results: Record<string, { title: string; description: string }> = {};
-
-      await Promise.all(
-        languages.map(async (lang) => {
-          const res = await translateTripContent({
-            title: title.trim(),
-            description: description?.trim() || "",
-            targetLang: lang,
-          });
-          results[lang] = res;
-        })
-      );
+      const results = await translateTripContentAll({
+        title: title.trim(),
+        description: description?.trim() || "",
+      });
 
       return NextResponse.json({ success: true, translations: results });
     }

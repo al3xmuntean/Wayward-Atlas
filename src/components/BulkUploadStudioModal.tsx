@@ -177,8 +177,18 @@ export function BulkUploadStudioModal({
     }
   };
 
+  const backdropMouseDownRef = useRef(false);
+
+  const handleBackdropMouseDown = (e: React.MouseEvent) => {
+    backdropMouseDownRef.current = e.target === e.currentTarget;
+  };
+
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target !== e.currentTarget) return;
+    if (!backdropMouseDownRef.current || e.target !== e.currentTarget) {
+      backdropMouseDownRef.current = false;
+      return;
+    }
+    backdropMouseDownRef.current = false;
     handleClosePrompt();
   };
 
@@ -211,17 +221,20 @@ export function BulkUploadStudioModal({
     }
   };
 
-  // Assign all unmapped photos to the current center of the mini-map
-  const handleAssignUnmappedToMapCenter = () => {
-    if (unmappedPhotoIds.length === 0) return;
-    const center = mapRef.current?.getCenter() || { lng: 24.12, lat: 45.79 };
-    const lat = center.lat;
-    const lng = center.lng;
+  const unmappedPhotoIdsRef = useRef<string[]>([]);
+  useEffect(() => {
+    unmappedPhotoIdsRef.current = unmappedPhotoIds;
+  }, [unmappedPhotoIds]);
+
+  // Pure, robust assignment of unmapped photos to given coordinates
+  const assignUnmappedToLocation = (lat: number, lng: number, customName?: string) => {
+    const unmapped = unmappedPhotoIdsRef.current;
+    if (unmapped.length === 0) return;
 
     const newSpotId = `spot-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    const defaultName = titleRef.current.trim()
-      ? titleRef.current.trim()
-      : `Punct Foto ${spots.length + 1}`;
+    const defaultName =
+      customName ||
+      (titleRef.current.trim() ? titleRef.current.trim() : `Punct Foto ${spotsRef.current.length + 1}`);
 
     const newSpot: SpotGroup = {
       id: newSpotId,
@@ -230,13 +243,13 @@ export function BulkUploadStudioModal({
       latitude: lat,
       longitude: lng,
       minRole: withPartnerRef.current ? "PARTNER" : "VIEWER",
-      photoIds: [...unmappedPhotoIds],
+      photoIds: [...unmapped],
     };
 
     setSpots((prev) => [...prev, newSpot]);
     setPhotos((prev) =>
       prev.map((p) =>
-        unmappedPhotoIds.includes(p.id)
+        unmapped.includes(p.id)
           ? { ...p, latitude: lat, longitude: lng, spotName: defaultName }
           : p
       )
@@ -245,9 +258,22 @@ export function BulkUploadStudioModal({
     setUnmappedPhotoIds([]);
 
     if (mapRef.current) {
-      mapRef.current.flyTo({ center: [lng, lat], zoom: 11 });
+      mapRef.current.flyTo({ center: [lng, lat], zoom: 12 });
     }
   };
+
+  const assignUnmappedToLocationRef = useRef(assignUnmappedToLocation);
+  useEffect(() => {
+    assignUnmappedToLocationRef.current = assignUnmappedToLocation;
+  });
+
+  // Assign all unmapped photos to the current center of the mini-map
+  const handleAssignUnmappedToMapCenter = () => {
+    if (unmappedPhotoIds.length === 0) return;
+    const center = mapRef.current?.getCenter() || { lng: 24.12, lat: 45.79 };
+    assignUnmappedToLocation(center.lat, center.lng);
+  };
+
 
   // Geocode location search
   const handleSearchLocation = async (query: string) => {
@@ -457,42 +483,9 @@ export function BulkUploadStudioModal({
 
     map.on("load", () => {
       mapRef.current = map;
-      // Click on map to assign unmapped photos
+      // Click on map to assign unmapped photos to that exact location
       map.on("click", (e) => {
-        const { lng, lat } = e.lngLat;
-        // If there are unmapped photos, assign them to a new spot at click coordinates
-        setUnmappedPhotoIds((currentUnmapped) => {
-          if (currentUnmapped.length === 0) return currentUnmapped;
-
-          const newSpotId = `spot-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-          const defaultName = titleRef.current.trim()
-            ? titleRef.current.trim()
-            : `Punct Foto ${spotsRef.current.length + 1}`;
-
-          setSpots((prevSpots) => [
-            ...prevSpots,
-            {
-              id: newSpotId,
-              name: defaultName,
-              description: "",
-              latitude: lat,
-              longitude: lng,
-              minRole: withPartnerRef.current ? "PARTNER" : "VIEWER",
-              photoIds: [...currentUnmapped],
-            },
-          ]);
-
-          setPhotos((prevPhotos) =>
-            prevPhotos.map((p) =>
-              currentUnmapped.includes(p.id)
-                ? { ...p, latitude: lat, longitude: lng, spotName: defaultName }
-                : p
-            )
-          );
-
-          setSelectedSpotId(newSpotId);
-          return []; // Cleared unmapped
-        });
+        assignUnmappedToLocationRef.current(e.lngLat.lat, e.lngLat.lng);
       });
     });
 
@@ -504,7 +497,7 @@ export function BulkUploadStudioModal({
     };
   }, []);
 
-  // Sync Draggable Markers with Spots
+  // Sync Draggable Markers with Spots (showing actual photo preview thumbnail!)
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -520,26 +513,48 @@ export function BulkUploadStudioModal({
     // Add or update markers
     spots.forEach((spot) => {
       const isSelected = spot.id === selectedSpotId;
+      const coverPhoto = photos.find((p) => spot.photoIds.includes(p.id));
+
+      const innerContent = coverPhoto?.previewUrl
+        ? `
+          <div class="relative flex flex-col items-center cursor-grab active:cursor-grabbing group">
+            <div class="relative w-12 h-12 rounded-2xl p-0.5 bg-white dark:bg-slate-900 shadow-2xl border-2 ${
+              isSelected ? "border-amber-400 ring-4 ring-amber-400/40 scale-110" : "border-olive-500 hover:scale-105"
+            } transition-all">
+              <img src="${coverPhoto.previewUrl}" alt="${spot.name}" class="w-full h-full object-cover rounded-xl" />
+              <div class="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-olive-700 text-white text-[10px] font-black shadow-md border-2 border-white dark:border-slate-900 leading-none">
+                ${spot.photoIds.length}
+              </div>
+            </div>
+            <div class="mt-1 px-2 py-0.5 rounded-md bg-slate-950/90 text-[10px] text-white font-bold whitespace-nowrap shadow-lg border border-slate-700 pointer-events-none max-w-[130px] truncate text-center">
+              ${spot.name}
+            </div>
+          </div>
+        `
+        : `
+          <div class="relative flex flex-col items-center cursor-grab active:cursor-grabbing group">
+            <div class="w-9 h-9 rounded-2xl border-2 ${
+              isSelected ? "border-amber-400 bg-amber-600 ring-4 ring-amber-400/40 scale-110" : "border-olive-400 bg-olive-700 hover:scale-105"
+            } text-white flex items-center justify-center font-black text-xs shadow-xl transition-all">
+              ${spot.photoIds.length}
+            </div>
+            <div class="mt-1 px-2 py-0.5 rounded-md bg-slate-950/90 text-[10px] text-white font-bold whitespace-nowrap shadow-lg border border-slate-700 pointer-events-none max-w-[130px] truncate text-center">
+              ${spot.name}
+            </div>
+          </div>
+        `;
 
       if (markersRef.current.has(spot.id)) {
         const existing = markersRef.current.get(spot.id)!;
         existing.setLngLat([spot.longitude, spot.latitude]);
+        existing.getElement().innerHTML = innerContent;
         return;
       }
 
       // Create custom draggable marker element
       const el = document.createElement("div");
-      el.className = "cursor-grab active:cursor-grabbing group";
-      el.innerHTML = `
-        <div class="relative flex items-center justify-center transition-transform hover:scale-120">
-          <div class="w-8 h-8 rounded-full border-2 ${isSelected ? "border-amber-400 bg-amber-600" : "border-olive-400 bg-olive-700"} text-white flex items-center justify-center font-bold text-xs shadow-lg">
-            ${spot.photoIds.length}
-          </div>
-          <div class="absolute -bottom-5 px-2 py-0.5 rounded-md bg-slate-900/90 text-[10px] text-white font-semibold whitespace-nowrap shadow-md border border-slate-700 pointer-events-none">
-            ${spot.name}
-          </div>
-        </div>
-      `;
+      el.className = "cursor-grab active:cursor-grabbing";
+      el.innerHTML = innerContent;
 
       const marker = new maplibregl.Marker({ element: el, draggable: true })
         .setLngLat([spot.longitude, spot.latitude])
@@ -647,8 +662,8 @@ export function BulkUploadStudioModal({
     setUploadProgress("Se pregătesc imaginile...");
 
     try {
-      // 1. Upload images in chunks of 15 files
-      const CHUNK_SIZE = 15;
+      // 1. Upload images in chunks of 5 files (prevents Cloudflare payload limits & provides smooth progress)
+      const CHUNK_SIZE = 5;
       const uploadedResults: any[] = [];
 
       for (let i = 0; i < photos.length; i += CHUNK_SIZE) {
@@ -750,12 +765,16 @@ export function BulkUploadStudioModal({
           ? "fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 dark:bg-slate-950/85 backdrop-blur-md animate-fade-in"
           : "hidden"
       }
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
     >
       <div
         ref={modalRef}
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
         onDragEnter={handleDragEnter}
@@ -1261,6 +1280,10 @@ export function BulkUploadStudioModal({
             role="region"
             aria-label="Mini-hartă interactivă pentru poziționarea și ajustarea spoturilor pe hartă"
             className="w-full lg:w-1/2 h-64 lg:h-full relative bg-slate-100 dark:bg-slate-950 overflow-hidden"
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
           >

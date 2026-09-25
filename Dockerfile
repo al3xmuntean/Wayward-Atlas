@@ -27,6 +27,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+RUN apk add --no-cache su-exec
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -35,14 +36,14 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/.next ./.next
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 
-# Prepare directories with permissions for persistent storage
-RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads /app/prisma
-
-USER nextjs
+# Prepare directories and entrypoint script
+RUN chmod +x /app/docker-entrypoint.sh && mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads /app/prisma
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["npm", "start"]
