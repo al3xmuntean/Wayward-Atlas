@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { TripData, PhotoData, SpotPinData, SafeUser } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
+import { useTranslation } from "@/lib/i18n/context";
 import {
   extractVisitedCountries,
   fetchWorldCountries,
@@ -71,6 +72,11 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
     ref
   ) {
     const { resolvedTheme } = useTheme();
+    const { t } = useTranslation();
+    const tRef = useRef(t);
+    useEffect(() => {
+      tRef.current = t;
+    }, [t]);
     const isLight = resolvedTheme === "light";
 
     // Containers
@@ -88,7 +94,7 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
     const [isMapReady, setIsMapReady] = useState(false);
     // currentActiveLayer: "globe" when looking from high altitude, "street" when zoomed in
     const [activeLayer, setActiveLayer] = useState<"globe" | "street">("globe");
-    const [mapStyle, setMapStyle] = useState<"dark" | "voyager">(isLight ? "voyager" : "dark");
+    const [mapStyle, setMapStyle] = useState<"dark" | "voyager">("voyager");
     const [countriesGeoJson, setCountriesGeoJson] = useState<any>(() => getCachedWorldCountries());
     const isTransitioningRef = useRef(false);
 
@@ -203,17 +209,22 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
               ? "border-rose-400 bg-rose-950/80 text-rose-200"
               : "border-olive-400 bg-olive-950/80 text-olive-200";
 
+            const photoWord = d.totalPhotos === 1 ? tRef.current("map.photoCountSingle") : tRef.current("map.photoCountPlural");
+            const hintText = tRef.current("map.clickToZoomStreet");
+            const safeCity = String(d.cityName || "").replace(/</g, "&lt;");
+            const safeCountry = d.country ? String(d.country).replace(/</g, "&lt;") : "";
+
             el.innerHTML = `
               <div class="relative flex items-center justify-center">
                 <div class="w-10 h-10 rounded-2xl overflow-hidden border-2 ${isPartnerSpot ? "border-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.6)]" : "border-olive-400 shadow-[0_0_15px_rgba(132,169,40,0.6)]"} bg-slate-900 transition-transform duration-300 hover:scale-115">
-                  <img src="${d.coverPhoto?.thumbnailUrl || d.coverPhoto?.url || ""}" alt="${d.cityName}" class="w-full h-full object-cover" />
+                  <img src="${d.coverPhoto?.thumbnailUrl || d.coverPhoto?.url || ""}" alt="${safeCity}" class="w-full h-full object-cover" />
                 </div>
                 ${d.totalPhotos > 1 ? `<span class="absolute -top-1.5 -right-2 px-1.5 py-0.5 text-[10px] font-extrabold rounded-full border shadow-sm ${badgeClass}">${d.totalPhotos}</span>` : ""}
               </div>
-              <div class="marker-tooltip glass-panel-glow">
-                <p class="font-bold text-xs text-white">${d.cityName}</p>
-                <p class="text-[10px] text-slate-300">${d.country ? `${d.country} • ` : ""}${d.totalPhotos} fotografii</p>
-                <p class="text-[9px] text-olive-300 font-semibold mt-1">Apasă pentru zoom stradal</p>
+              <div class="marker-tooltip">
+                <p class="tooltip-title">${safeCity}</p>
+                <p class="tooltip-desc">${safeCountry ? `${safeCountry} • ` : ""}${d.totalPhotos} ${photoWord}</p>
+                <p class="tooltip-hint">${hintText}</p>
               </div>
             `;
 
@@ -275,8 +286,8 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
     // Update Globe city cluster markers
     useEffect(() => {
       if (!globeInstanceRef.current || !isGlobeReady) return;
-      globeInstanceRef.current.htmlElementsData(cityClusters);
-    }, [cityClusters, isGlobeReady]);
+      globeInstanceRef.current.htmlElementsData([...cityClusters]);
+    }, [cityClusters, isGlobeReady, t]);
 
     // Update country scratch polygons on Globe
     useEffect(() => {
@@ -368,6 +379,7 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
       markersRef.current = [];
 
       visibleSpots.forEach((spot) => {
+        const photoWord = spot.totalPhotosCount === 1 ? t("map.photoCountSingle") : t("map.photoCountPlural");
         const el = document.createElement("div");
         el.className = "wayward-marker group focus-visible:ring-2 focus-visible:ring-olive-400 focus-visible:outline-none rounded-2xl";
         el.style.cursor = "pointer";
@@ -375,7 +387,10 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
         el.setAttribute("tabindex", "0");
         el.setAttribute(
           "aria-label",
-          `Punct de interes: ${spot.name}${spot.city ? `, ${spot.city}` : ""}, ${spot.totalPhotosCount} fotografii. Apasă Enter pentru detalii.`
+          `${t("map.spotAria")
+            .replace("{name}", `${spot.name}${spot.city ? `, ${spot.city}` : ""}`)
+            .replace("{count}", String(spot.totalPhotosCount))
+            .replace("{photos}", photoWord)}`
         );
 
         const isPartnerSpot = Boolean(spot.hasPartnerPhotos && (currentUser?.role === "PARTNER" || currentUser?.role === "ADMIN"));
@@ -405,17 +420,17 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
           container.appendChild(badge);
         }
 
-        // Tooltip
+        // High-contrast, theme-independent readable tooltip
         const tooltip = document.createElement("div");
-        tooltip.className = "marker-tooltip glass-panel-glow";
+        tooltip.className = "marker-tooltip";
 
         const titleP = document.createElement("p");
-        titleP.className = "font-bold text-xs text-white";
+        titleP.className = "tooltip-title";
         titleP.textContent = spot.name;
 
         const descP = document.createElement("p");
-        descP.className = "text-[10px] text-slate-300";
-        descP.textContent = `${spot.city ? `${spot.city} • ` : ""}${spot.totalPhotosCount} fotografii`;
+        descP.className = "tooltip-desc";
+        descP.textContent = `${spot.city ? `${spot.city} • ` : ""}${spot.totalPhotosCount} ${photoWord}`;
 
         tooltip.appendChild(titleP);
         tooltip.appendChild(descP);
@@ -447,7 +462,7 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
 
         markersRef.current.push(marker);
       });
-    }, [visibleSpots, isMapReady, onSelectPhoto, onSelectSpot, trips, currentUser]);
+    }, [visibleSpots, isMapReady, onSelectPhoto, onSelectSpot, trips, currentUser, t]);
 
     // =========================================================================
     // 3. SEAMLESS SMART TRANSITIONS (NO SUDDEN JUMPS)
@@ -549,21 +564,36 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
             {activeLayer === "globe" ? (
               <>
                 <Globe2 className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400 animate-spin-slow" />
-                <span>Terra 3D</span>
+                <span>{t("map.terra3d")}</span>
               </>
             ) : (
               <>
                 <MapIcon className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" />
-                <span>Stradal Detaliat</span>
+                <span>{t("map.detailedStreet")}</span>
               </>
             )}
           </div>
+
+          {/* Map Layer Style Switcher (Voyager / Dark) */}
+          <button
+            onClick={() => setMapStyle((s) => (s === "voyager" ? "dark" : "voyager"))}
+            title={t("map.toggleStyle")}
+            aria-label={t("map.toggleStyle")}
+            className={`p-2.5 rounded-2xl glass-panel border transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center ${
+              mapStyle === "voyager"
+                ? "bg-olive-600/30 border-olive-400 text-olive-800 dark:text-olive-300"
+                : "border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+          </button>
 
           {/* Scratch Map Polygon Toggle */}
           {onToggleScratchMap && (
             <button
               onClick={onToggleScratchMap}
-              title={showScratchMap ? "Ascunde țările vizitate" : "Arată țările vizitate (Scratch Map)"}
+              title={showScratchMap ? t("map.scratchMapHide") : t("map.scratchMapShow")}
+              aria-label={showScratchMap ? t("map.scratchMapHide") : t("map.scratchMapShow")}
               className={`p-2.5 rounded-2xl glass-panel border transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center ${
                 showScratchMap
                   ? "bg-olive-600/30 border-olive-400 text-olive-800 dark:text-olive-300"
@@ -577,7 +607,8 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
           {/* Reset / Orbit View Button */}
           <button
             onClick={() => transitionToGlobe(45.79, 24.12)}
-            title="Resetează la vedere de ansamblu (Glob)"
+            title={t("map.resetView")}
+            aria-label={t("map.resetView")}
             className="p-2.5 rounded-2xl glass-panel border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-olive-700 dark:hover:text-white hover:border-olive-500/50 transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center"
           >
             <RotateCcw className="w-4 h-4" />
@@ -593,7 +624,8 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
                 mapRef.current?.zoomIn();
               }
             }}
-            title="Apropie (Zoom In)"
+            title={t("map.zoomIn")}
+            aria-label={t("map.zoomIn")}
             className="p-2.5 rounded-2xl glass-panel border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-olive-700 dark:hover:text-white hover:border-olive-500/50 transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center"
           >
             <ZoomIn className="w-4 h-4" />
@@ -609,7 +641,8 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
                 if (pov) globeInstanceRef.current?.pointOfView({ altitude: pov.altitude * 1.5 }, 600);
               }
             }}
-            title="Depărtează (Zoom Out)"
+            title={t("map.zoomOut")}
+            aria-label={t("map.zoomOut")}
             className="p-2.5 rounded-2xl glass-panel border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-olive-700 dark:hover:text-white hover:border-olive-500/50 transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center"
           >
             <ZoomOut className="w-4 h-4" />

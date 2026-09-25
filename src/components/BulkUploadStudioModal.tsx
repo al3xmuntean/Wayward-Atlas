@@ -30,6 +30,7 @@ import { useModalA11y } from "@/hooks/useModalA11y";
 import { FlagIcon } from "@/components/FlagIcon";
 import { Language } from "@/lib/i18n/types";
 import { useTranslation } from "@/lib/i18n/context";
+import { useTheme } from "@/lib/theme";
 
 const CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 const CARTO_VOYAGER = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
@@ -78,6 +79,8 @@ export function BulkUploadStudioModal({
   useModalA11y({ isOpen, onClose, modalRef });
 
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -229,7 +232,7 @@ export function BulkUploadStudioModal({
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: CARTO_DARK,
+      style: CARTO_VOYAGER,
       center: [24.12, 45.79],
       zoom: 6,
     });
@@ -520,16 +523,16 @@ export function BulkUploadStudioModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="bulk-studio-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 dark:bg-slate-950/85 backdrop-blur-md animate-fade-in"
       onClick={onClose}
     >
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-7xl h-[94vh] glass-panel-glow rounded-3xl border border-olive-500/30 overflow-hidden flex flex-col shadow-2xl bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white"
+        className="relative w-full max-w-7xl h-[94vh] rounded-3xl border border-slate-200 dark:border-olive-500/30 overflow-hidden flex flex-col shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-b border-olive-500/20 bg-olive-500/5">
+        <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-200 dark:border-olive-500/20 bg-slate-50 dark:bg-slate-900/90">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-olive-700 text-white flex items-center justify-center shadow-md">
               <Upload className="w-5 h-5" />
@@ -576,16 +579,16 @@ export function BulkUploadStudioModal({
           {/* =========================================================================
               LEFT PANEL: Trip Info, Spots List, and Photo Grids
               ========================================================================= */}
-          <div className="w-full lg:w-1/2 flex flex-col border-r border-olive-500/20 overflow-y-auto p-5 space-y-5">
+          <div className="w-full lg:w-1/2 flex flex-col border-r border-slate-200 dark:border-olive-500/20 overflow-y-auto p-5 space-y-5 bg-white dark:bg-slate-900">
             {/* Trip Details Box */}
-            <div className="space-y-3 p-4 rounded-2xl bg-olive-500/10 border border-olive-500/20">
+            <div className="space-y-3 p-4 rounded-2xl bg-olive-50/70 dark:bg-olive-950/30 border border-olive-200 dark:border-olive-500/25">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-olive-800 dark:text-olive-300">
                   Date Călătorie & Album
                 </span>
 
                 {/* Multilingual Selector */}
-                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-300 dark:border-slate-700">
+                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
                   {(["ro", "en", "de", "es", "fr"] as Language[]).map((lang) => (
                     <button
                       key={lang}
@@ -594,7 +597,7 @@ export function BulkUploadStudioModal({
                       className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none ${
                         activeLangTab === lang
                           ? "bg-olive-700 text-white"
-                          : "text-slate-600 dark:text-slate-400 hover:text-white"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       }`}
                     >
                       <FlagIcon code={lang} className="w-3.5 h-2.5 inline mr-1" />
@@ -612,7 +615,7 @@ export function BulkUploadStudioModal({
                     placeholder="Titlu Călătorie (ex: Expediție Toscana & Coasta Amalfi)..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:outline-none focus:border-olive-500"
+                    className="w-full px-3 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-olive-500"
                   />
                   <textarea
                     aria-label="Descriere generală călătorie"
@@ -620,7 +623,7 @@ export function BulkUploadStudioModal({
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={2}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:outline-none focus:border-olive-500 resize-none"
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-olive-500 resize-none"
                   />
                 </>
               ) : (
@@ -636,7 +639,7 @@ export function BulkUploadStudioModal({
                         [activeLangTab]: { ...prev[activeLangTab], title: e.target.value },
                       }))
                     }
-                    className="w-full px-3 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:outline-none focus:border-olive-500"
+                    className="w-full px-3 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-olive-500"
                   />
                   <textarea
                     aria-label={`Descrierea călătoriei în ${activeLangTab.toUpperCase()}`}
@@ -649,7 +652,7 @@ export function BulkUploadStudioModal({
                       }))
                     }
                     rows={2}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:outline-none focus:border-olive-500 resize-none"
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-olive-500 resize-none"
                   />
                 </>
               )}
@@ -661,7 +664,7 @@ export function BulkUploadStudioModal({
                     aria-label="Data de început a călătoriei"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="px-2 py-1 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:outline-none focus:border-olive-500"
+                    className="px-2 py-1 rounded-xl text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-olive-500"
                   />
                   <span className="text-xs text-slate-400">până la</span>
                   <input
@@ -669,7 +672,7 @@ export function BulkUploadStudioModal({
                     aria-label="Data de sfârșit a călătoriei"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="px-2 py-1 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:outline-none focus:border-olive-500"
+                    className="px-2 py-1 rounded-xl text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-olive-500"
                   />
                 </div>
 
@@ -677,7 +680,7 @@ export function BulkUploadStudioModal({
                   onClick={handleTranslateAll}
                   disabled={translating || !title}
                   aria-label="Tradu automat titlul și descrierea în 4 limbi utilizând Gemini AI"
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-olive-600/20 hover:bg-olive-600/30 text-olive-800 dark:text-olive-300 text-xs font-bold transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-olive-100 hover:bg-olive-200 dark:bg-olive-600/20 dark:hover:bg-olive-600/30 text-olive-800 dark:text-olive-300 text-xs font-bold transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>{translating ? "Se traduce..." : "Tradu cu AI în 4 Limbi"}</span>
@@ -685,7 +688,7 @@ export function BulkUploadStudioModal({
               </div>
 
               {/* Partner Toggle */}
-              <div className="flex items-center justify-between pt-2 border-t border-olive-500/15">
+              <div className="flex items-center justify-between pt-2 border-t border-olive-200 dark:border-olive-500/20">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -724,14 +727,14 @@ export function BulkUploadStudioModal({
                 </button>
                 <button
                   onClick={() => applyRoleToAllSpots("CLOSE_FRIEND")}
-                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30 transition-colors"
+                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-100 dark:bg-amber-500/20 border border-amber-300/40 dark:border-amber-500/30 text-amber-900 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors"
                 >
                   Prieteni
                 </button>
                 {withPartner && (
                   <button
                     onClick={() => applyRoleToAllSpots("PARTNER")}
-                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-500/20 text-rose-800 dark:text-rose-200 hover:bg-rose-500/30 transition-colors"
+                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-100 dark:bg-rose-500/20 border border-rose-300/40 dark:border-rose-500/30 text-rose-900 dark:text-rose-200 hover:bg-rose-200 dark:hover:bg-rose-500/30 transition-colors"
                   >
                     În Doi
                   </button>
@@ -741,7 +744,7 @@ export function BulkUploadStudioModal({
 
             {/* Unmapped Photos Warning Banner */}
             {unmappedPhotoIds.length > 0 && (
-              <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between">
+              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                   <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
@@ -758,10 +761,10 @@ export function BulkUploadStudioModal({
               </h3>
 
               {spots.length === 0 ? (
-                <div className="py-12 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center text-center p-6">
+                <div className="py-12 border-2 border-dashed border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 rounded-3xl flex flex-col items-center justify-center text-center p-6 text-slate-700 dark:text-slate-300">
                   <Upload className="w-8 h-8 text-slate-400 mb-2" />
                   <p className="text-sm font-bold">Nicio fotografie adăugată</p>
-                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
                     Trage sau selectează fotografii de pe cameră / telefon. Datele GPS le vor grupa automat pe hartă!
                   </p>
                 </div>
@@ -775,8 +778,8 @@ export function BulkUploadStudioModal({
                       key={spot.id}
                       className={`p-4 rounded-3xl border transition-all duration-200 ${
                         isSelected
-                          ? "border-olive-500 bg-olive-500/10 shadow-lg ring-1 ring-olive-500/30"
-                          : "border-slate-300 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60"
+                          ? "border-olive-500 bg-olive-50/70 dark:bg-olive-500/10 shadow-lg ring-1 ring-olive-500/30"
+                          : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60"
                       }`}
                     >
                       {/* Spot Header */}
@@ -806,7 +809,7 @@ export function BulkUploadStudioModal({
                               );
                             }}
                             placeholder="Nume Locație / Spot..."
-                            className="font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-300 focus:border-olive-500 focus:outline-none flex-1 truncate"
+                            className="font-bold text-sm bg-transparent text-slate-900 dark:text-white border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-olive-500 focus:outline-none flex-1 truncate"
                           />
                         </div>
 
@@ -823,7 +826,7 @@ export function BulkUploadStudioModal({
                                     : r === "CLOSE_FRIEND"
                                     ? "bg-amber-600 text-white"
                                     : "bg-olive-700 text-white"
-                                  : "text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                               }`}
                             >
                               {r === "PARTNER" ? "În Doi" : r === "CLOSE_FRIEND" ? "Prieteni" : "Public"}
@@ -879,20 +882,20 @@ export function BulkUploadStudioModal({
           <div
             role="region"
             aria-label="Mini-hartă interactivă pentru poziționarea și ajustarea spoturilor pe hartă"
-            className="w-full lg:w-1/2 h-64 lg:h-full relative bg-slate-950"
+            className="w-full lg:w-1/2 h-64 lg:h-full relative bg-slate-100 dark:bg-slate-950"
           >
             <div ref={mapContainerRef} className="w-full h-full" />
 
             {/* Map Overlay Instructions */}
-            <div className="absolute top-3 left-3 z-10 glass-panel px-3 py-1.5 rounded-full border border-olive-500/30 text-xs font-semibold text-white shadow-md flex items-center gap-1.5 pointer-events-none">
-              <MapPin className="w-3.5 h-3.5 text-olive-400" />
+            <div className="absolute top-3 left-3 z-10 glass-panel px-3 py-1.5 rounded-full border border-olive-500/30 text-xs font-semibold text-slate-800 dark:text-white shadow-md flex items-center gap-1.5 pointer-events-none">
+              <MapPin className="w-3.5 h-3.5 text-olive-600 dark:text-olive-400" />
               <span>Trage pin-urile pe hartă pentru ajustare precisă</span>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-olive-500/20 bg-white/80 dark:bg-slate-900/80">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-olive-500/20 bg-slate-50/90 dark:bg-slate-900/90">
           <div>
             {uploadProgress ? (
               <p
@@ -903,7 +906,7 @@ export function BulkUploadStudioModal({
                 {uploadProgress}
               </p>
             ) : (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {photos.length} fotografii vor fi convertite automat în WebP optimizat
               </p>
             )}
@@ -914,7 +917,7 @@ export function BulkUploadStudioModal({
               onClick={onClose}
               disabled={submitting}
               aria-label="Anulează procesul și închide fereastra"
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
             >
               Anulează
             </button>
@@ -946,7 +949,7 @@ export function BulkUploadStudioModal({
             onClick={() => setActivePhotoForEdit(null)}
           >
             <div
-              className="w-full max-w-md rounded-3xl glass-panel-glow border border-olive-500/30 p-5 bg-white dark:bg-slate-900 shadow-2xl space-y-4"
+              className="w-full max-w-md rounded-3xl border border-slate-200 dark:border-olive-500/30 p-5 bg-white dark:bg-slate-900 shadow-2xl space-y-4 text-slate-900 dark:text-white"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">

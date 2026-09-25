@@ -269,6 +269,47 @@ body {
   z-index: 50;
 }
 
+.marker-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(132, 169, 40, 0.5) !important;
+  border-radius: 12px;
+  padding: 5px 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(125, 166, 43, 0.25);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 60;
+  text-align: center;
+}
+
+.marker-tooltip .tooltip-title {
+  font-weight: 700;
+  font-size: 12px;
+  color: #ffffff !important;
+  line-height: 1.25;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.marker-tooltip .tooltip-desc {
+  font-size: 10px;
+  font-weight: 500;
+  color: #e2e8f0 !important;
+  margin-top: 2px;
+}
+
+.marker-tooltip .tooltip-hint {
+  font-size: 9px;
+  font-weight: 600;
+  color: #bef264 !important;
+  margin-top: 3px;
+}
+
 .marker-pin {
   width: 36px;
   height: 36px;
