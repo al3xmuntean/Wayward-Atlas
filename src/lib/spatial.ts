@@ -56,6 +56,11 @@ export function groupPhotosIntoSpots(
         return true;
       }
 
+      // Fast bounding-box pre-check to eliminate >95% of costly Haversine trigonometric calls
+      // 0.0015 deg lat is ~166m. If delta exceeds this, distance > thresholdMeters
+      if (Math.abs(photo.latitude - spot.latitude) > 0.0015) return false;
+      if (Math.abs(photo.longitude - spot.longitude) > 0.0025) return false;
+
       // Geospatial distance check
       const dist = calculateMetersDistance(
         photo.latitude,
@@ -155,10 +160,18 @@ export function filterSpotsByRole(
 
       if (visiblePhotos.length === 0) return null;
 
+      // Recompute visibility badges strictly based on permitted photos to avoid metadata leakage
+      const hasPartner = visiblePhotos.some((p) => p.minRole === "PARTNER" || p.partnerPreselected);
+      const hasFriends = visiblePhotos.some((p) => p.minRole === "CLOSE_FRIEND" || p.hasPeople);
+      const hasPublic = visiblePhotos.some((p) => !p.isPrivate && (p.minRole === "PUBLIC" || !p.minRole));
+
       return {
         ...spot,
         photos: visiblePhotos,
         totalPhotosCount: visiblePhotos.length,
+        hasPartnerPhotos: hasPartner,
+        hasFriendsPhotos: hasFriends,
+        hasPublicPhotos: hasPublic,
         coverPhoto: visiblePhotos[0] || spot.coverPhoto,
       };
     })

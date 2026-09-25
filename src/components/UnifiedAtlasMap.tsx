@@ -369,34 +369,75 @@ export const UnifiedAtlasMap = forwardRef<UnifiedAtlasMapRef, UnifiedAtlasMapPro
 
       visibleSpots.forEach((spot) => {
         const el = document.createElement("div");
-        el.className = "wayward-marker group";
+        el.className = "wayward-marker group focus-visible:ring-2 focus-visible:ring-olive-400 focus-visible:outline-none rounded-2xl";
         el.style.cursor = "pointer";
+        el.setAttribute("role", "button");
+        el.setAttribute("tabindex", "0");
+        el.setAttribute(
+          "aria-label",
+          `Punct de interes: ${spot.name}${spot.city ? `, ${spot.city}` : ""}, ${spot.totalPhotosCount} fotografii. Apasă Enter pentru detalii.`
+        );
 
         const isPartnerSpot = Boolean(spot.hasPartnerPhotos && (currentUser?.role === "PARTNER" || currentUser?.role === "ADMIN"));
         const borderStyle = isPartnerSpot
           ? "border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.7)]"
           : "border-olive-400 shadow-[0_0_12px_rgba(132,169,40,0.6)]";
 
-        el.innerHTML = `
-          <div class="relative flex items-center justify-center">
-            <div class="w-10 h-10 rounded-2xl overflow-hidden border-2 ${borderStyle} bg-slate-900 transition-transform duration-200 hover:scale-115 active:scale-95">
-              <img src="${spot.coverPhoto?.thumbnailUrl || spot.coverPhoto?.url || ""}" alt="${spot.name}" class="w-full h-full object-cover" />
-            </div>
-            ${spot.totalPhotosCount > 1 ? `<span class="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-extrabold rounded-full bg-slate-900 border border-olive-400 text-white shadow-md">+${spot.totalPhotosCount}</span>` : ""}
-          </div>
-          <div class="marker-tooltip glass-panel-glow">
-            <p class="font-bold text-xs text-white">${spot.name}</p>
-            <p class="text-[10px] text-slate-300">${spot.city ? `${spot.city} • ` : ""}${spot.totalPhotosCount} fotografii</p>
-          </div>
-        `;
+        // Main Pin Container
+        const container = document.createElement("div");
+        container.className = "relative flex items-center justify-center";
 
-        el.onclick = (e) => {
+        const imgBox = document.createElement("div");
+        imgBox.className = `w-10 h-10 rounded-2xl overflow-hidden border-2 ${borderStyle} bg-slate-900 transition-transform duration-200 group-hover:scale-115 active:scale-95`;
+
+        const img = document.createElement("img");
+        img.src = spot.coverPhoto?.thumbnailUrl || spot.coverPhoto?.url || "";
+        img.alt = spot.name;
+        img.className = "w-full h-full object-cover";
+        img.loading = "lazy";
+        imgBox.appendChild(img);
+        container.appendChild(imgBox);
+
+        if (spot.totalPhotosCount > 1) {
+          const badge = document.createElement("span");
+          badge.className = "absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-extrabold rounded-full bg-slate-900 border border-olive-400 text-white shadow-md";
+          badge.textContent = `+${spot.totalPhotosCount}`;
+          container.appendChild(badge);
+        }
+
+        // Tooltip
+        const tooltip = document.createElement("div");
+        tooltip.className = "marker-tooltip glass-panel-glow";
+
+        const titleP = document.createElement("p");
+        titleP.className = "font-bold text-xs text-white";
+        titleP.textContent = spot.name;
+
+        const descP = document.createElement("p");
+        descP.className = "text-[10px] text-slate-300";
+        descP.textContent = `${spot.city ? `${spot.city} • ` : ""}${spot.totalPhotosCount} fotografii`;
+
+        tooltip.appendChild(titleP);
+        tooltip.appendChild(descP);
+
+        el.appendChild(container);
+        el.appendChild(tooltip);
+
+        const handleActivate = (e: Event) => {
           e.stopPropagation();
           if (onSelectSpot) {
             onSelectSpot(spot);
           } else {
             const firstTrip = trips.find((t) => t.id === spot.tripIds[0]) || trips[0];
             onSelectPhoto(spot.coverPhoto, firstTrip);
+          }
+        };
+
+        el.onclick = handleActivate;
+        el.onkeydown = (e: KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleActivate(e);
           }
         };
 

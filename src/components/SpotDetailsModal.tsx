@@ -114,7 +114,8 @@ export function SpotDetailsModal({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Închide detaliile spotului"
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
             >
               <X className="w-5 h-5" />
             </button>
@@ -122,10 +123,12 @@ export function SpotDetailsModal({
         </div>
 
         {/* Filter Tabs by Tier */}
-        <div className="flex items-center gap-2 px-6 py-2.5 border-b border-olive-500/15 bg-olive-500/5 overflow-x-auto">
+        <div role="tablist" aria-label="Filtrare fotografii după nivel de confidențialitate" className="flex items-center gap-2 px-6 py-2.5 border-b border-olive-500/15 bg-olive-500/5 overflow-x-auto">
           <button
+            role="tab"
+            aria-selected={activeTierFilter === "ALL"}
             onClick={() => setActiveTierFilter("ALL")}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none ${
               activeTierFilter === "ALL"
                 ? "bg-olive-700 text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-300 hover:bg-olive-500/20"
@@ -136,8 +139,10 @@ export function SpotDetailsModal({
 
           {spot.hasPublicPhotos && (
             <button
+              role="tab"
+              aria-selected={activeTierFilter === "PUBLIC"}
               onClick={() => setActiveTierFilter("PUBLIC")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none ${
                 activeTierFilter === "PUBLIC"
                   ? "bg-olive-700 text-white shadow-sm"
                   : "text-slate-600 dark:text-slate-300 hover:bg-olive-500/20"
@@ -150,8 +155,10 @@ export function SpotDetailsModal({
 
           {isFriend && spot.hasFriendsPhotos && (
             <button
+              role="tab"
+              aria-selected={activeTierFilter === "FRIENDS"}
               onClick={() => setActiveTierFilter("FRIENDS")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none ${
                 activeTierFilter === "FRIENDS"
                   ? "bg-amber-600 text-white shadow-sm"
                   : "text-amber-800 dark:text-amber-300 hover:bg-amber-500/20"
@@ -164,8 +171,10 @@ export function SpotDetailsModal({
 
           {isPartner && spot.hasPartnerPhotos && (
             <button
+              role="tab"
+              aria-selected={activeTierFilter === "PARTNER"}
               onClick={() => setActiveTierFilter("PARTNER")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none ${
                 activeTierFilter === "PARTNER"
                   ? "bg-rose-600 text-white shadow-sm"
                   : "text-rose-800 dark:text-rose-300 hover:bg-rose-500/20"
@@ -186,26 +195,36 @@ export function SpotDetailsModal({
           )}
 
           {/* Photos Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" role="region" aria-label="Galerie foto spot">
             {displayPhotos.map((photo) => {
               const isPartnerPhoto = photo.minRole === "PARTNER" || photo.partnerPreselected;
               const isFriendPhoto = photo.minRole === "CLOSE_FRIEND" || photo.hasPeople;
+              const photoAlt = photo.caption || photo.placeName || spot.name;
 
               return (
                 <div
                   key={photo.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Vezi fotografia ${photoAlt}. Apasă Enter pentru previzualizare mărită.`}
                   onClick={() => setSelectedPhoto(photo)}
-                  className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer border border-slate-300 dark:border-slate-800 bg-slate-900 shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-xl"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedPhoto(photo);
+                    }
+                  }}
+                  className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer border border-slate-300 dark:border-slate-800 bg-slate-900 shadow-md transition-all duration-200 hover:scale-[1.03] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-olive-500 focus-visible:outline-none"
                 >
                   <img
                     src={photo.thumbnailUrl || photo.url}
-                    alt={photo.caption || photo.placeName || spot.name}
+                    alt={photoAlt}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                   />
 
                   {/* Tier Badges */}
-                  <div className="absolute top-2 left-2 flex items-center gap-1">
+                  <div className="absolute top-2 left-2 flex items-center gap-1 pointer-events-none">
                     {isPartnerPhoto && isPartner && (
                       <span className="p-1 rounded-lg bg-rose-600/90 text-white shadow-sm" title="Fotografie În Doi">
                         <Heart className="w-3 h-3 fill-white" />
@@ -235,7 +254,8 @@ export function SpotDetailsModal({
                           handleDownload(photo);
                         }}
                         title="Descarcă original"
-                        className="p-1 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
+                        aria-label={`Descarcă fotografia ${photoAlt} la rezoluție maximă`}
+                        className="p-1 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
                       >
                         <Download className="w-3 h-3" />
                       </button>
@@ -250,6 +270,9 @@ export function SpotDetailsModal({
         {/* Selected Photo Lightbox Overlay */}
         {selectedPhoto && (
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Previzualizare mărită fotografie"
             className="absolute inset-0 z-30 bg-slate-950/95 backdrop-blur-lg flex flex-col p-4 sm:p-6 animate-fade-in"
             onClick={() => setSelectedPhoto(null)}
           >
@@ -269,7 +292,8 @@ export function SpotDetailsModal({
                     e.stopPropagation();
                     handleDownload(selectedPhoto);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold transition-colors shadow-md"
+                  aria-label="Descarcă fotografia originală la rezoluție maximă"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold transition-colors shadow-md focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
                 >
                   <Download className="w-4 h-4" />
                   <span>Descarcă Original</span>
@@ -277,7 +301,8 @@ export function SpotDetailsModal({
 
                 <button
                   onClick={() => setSelectedPhoto(null)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                  aria-label="Închide previzualizarea fotografiei"
+                  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -290,7 +315,7 @@ export function SpotDetailsModal({
             >
               <img
                 src={selectedPhoto.url}
-                alt=""
+                alt={selectedPhoto.caption || selectedPhoto.placeName || spot.name}
                 className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
               />
             </div>

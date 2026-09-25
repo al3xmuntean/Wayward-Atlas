@@ -14,118 +14,87 @@ export async function GET(req: NextRequest) {
     const isPublic = userRole === "PUBLIC";
 
     // --- 1. PUBLIC GUEST MODE ---
-    // Only sees country-level pins, a single designated showcase photo per country, and year-level dates.
+    // Sees real public trips and public spot pins (strictly no people photos, not private, public minRole)
     if (isPublic) {
       const publicTrips = await prisma.trip.findMany({
         where: {
           isPrivate: false,
           minRole: { in: ["PUBLIC", "VIEWER"] },
+          status: "COMPLETED",
         },
         include: {
           photos: {
             where: {
               isPrivate: false,
               hasPeople: false,
-              minRole: { in: ["PUBLIC", "VIEWER"] },
+              minRole: "PUBLIC",
             },
-            orderBy: [
-              { isCountryCover: "desc" },
-              { takenAt: "asc" },
-            ],
+            orderBy: { takenAt: "asc" },
           },
         },
         orderBy: { startDate: "desc" },
       });
 
-      // Group by country to construct single country-level showcases
-      const countryMap = new Map<string, {
-        country: string;
-        years: Set<number>;
-        coverPhoto: any;
-        tripTitles: string[];
-      }>();
-
-      for (const trip of publicTrips) {
-        const tripYear = new Date(trip.startDate).getFullYear();
-        for (const photo of trip.photos) {
-          const countryName = photo.country || "Destinație";
-          if (!countryMap.has(countryName)) {
-            countryMap.set(countryName, {
-              country: countryName,
-              years: new Set([tripYear]),
-              coverPhoto: photo,
-              tripTitles: [trip.title],
-            });
-          } else {
-            const entry = countryMap.get(countryName)!;
-            entry.years.add(tripYear);
-            if (!entry.tripTitles.includes(trip.title)) {
-              entry.tripTitles.push(trip.title);
+      const formattedTrips: TripData[] = publicTrips
+        .filter((trip) => trip.photos.length > 0)
+        .map((trip) => {
+          const tripYear = new Date(trip.startDate).getFullYear();
+          const formattedPhotos: PhotoData[] = trip.photos.map((photo) => {
+            let tags: string[] = [];
+            try {
+              tags = JSON.parse(photo.tags);
+            } catch {
+              tags = [];
             }
-            // If current photo is explicitly marked as country cover, prefer it
-            if (photo.isCountryCover && !entry.coverPhoto.isCountryCover) {
-              entry.coverPhoto = photo;
-            }
-          }
-        }
-      }
+            return {
+              id: photo.id,
+              tripId: photo.tripId,
+              url: photo.url,
+              thumbnailUrl: photo.thumbnailUrl || photo.url,
+              latitude: photo.latitude,
+              longitude: photo.longitude,
+              placeName: photo.placeName,
+              country: photo.country,
+              city: photo.city,
+              spotName: photo.spotName,
+              spotDescription: photo.spotDescription,
+              caption: photo.caption,
+              originalUrl: null,
+              takenAt: `${tripYear}-01-01T00:00:00.000Z`,
+              takenYear: tripYear,
+              hasPeople: false,
+              isPrivate: false,
+              minRole: "PUBLIC",
+              isCountryCover: photo.isCountryCover,
+              partnerPreselected: false,
+              tags,
+            };
+          });
 
-      // Format as country-level TripData
-      const publicCountryTrips: TripData[] = Array.from(countryMap.values()).map((entry) => {
-        const yearsArray = Array.from(entry.years).sort((a, b) => b - a);
-        const latestYear = yearsArray[0] || new Date().getFullYear();
-        const photo = entry.coverPhoto;
-
-        let tags: string[] = [];
-        try {
-          tags = JSON.parse(photo.tags);
-        } catch {
-          tags = [];
-        }
-
-        const showcasePhoto: PhotoData = {
-          id: photo.id,
-          tripId: `country-${encodeURIComponent(entry.country)}`,
-          url: photo.url,
-          thumbnailUrl: photo.thumbnailUrl || photo.url,
-          latitude: photo.latitude,
-          longitude: photo.longitude,
-          placeName: `${entry.country} (Vedere Generală)`,
-          country: entry.country,
-          city: null,
-          takenAt: `${latestYear}-01-01T00:00:00.000Z`,
-          takenYear: latestYear,
-          hasPeople: false,
-          isPrivate: false,
-          minRole: "PUBLIC",
-          isCountryCover: true,
-          tags,
-        };
-
-        return {
-          id: `country-${encodeURIComponent(entry.country)}`,
-          title: entry.country,
-          description: `Călătorii explorate în ${entry.country} (${yearsArray.join(", ")}).`,
-          startDate: `${latestYear}-01-01T00:00:00.000Z`,
-          endDate: null,
-          year: latestYear,
-          isPrivate: false,
-          minRole: "PUBLIC",
-          withPartner: false,
-          partnerNotes: null,
-          createdById: "system",
-          photos: [showcasePhoto],
-          comments: [],
-          allowedUserIds: [],
-          isMaskedDate: true,
-          isCountryShowcase: true,
-          translations: null,
-        };
-      });
+          return {
+            id: trip.id,
+            title: trip.title,
+            description: trip.description,
+            startDate: `${tripYear}-01-01T00:00:00.000Z`,
+            endDate: null,
+            year: tripYear,
+            isPrivate: false,
+            minRole: "PUBLIC",
+            withPartner: false,
+            partnerNotes: null,
+            createdById: "system",
+            photos: formattedPhotos,
+            comments: [],
+            allowedUserIds: [],
+            isMaskedDate: true,
+            isCountryShowcase: false,
+            translations: trip.translations,
+          };
+        });
 
       return NextResponse.json({
         userRole: "PUBLIC",
-        trips: publicCountryTrips,
+        trips: formattedTrips,
       });
     }
 

@@ -6,6 +6,16 @@ import path from "path";
 import crypto from "crypto";
 import sharp from "sharp";
 
+const MIME_TO_SAFE_EXT: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/heic": ".heic",
+  "image/heif": ".heif",
+  "image/avif": ".avif",
+};
+
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 Megabytes
 const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
@@ -70,7 +80,7 @@ export async function POST(req: NextRequest) {
         }
 
         const fileId = crypto.randomUUID();
-        const rawExt = path.extname(file.name) || ".jpg";
+        const rawExt = MIME_TO_SAFE_EXT[mimeType] || ".jpg";
         const rawFilename = `${fileId}-raw${rawExt}`;
         const fullWebpFilename = `${fileId}-full.webp`;
         const thumbWebpFilename = `${fileId}-thumb.webp`;
