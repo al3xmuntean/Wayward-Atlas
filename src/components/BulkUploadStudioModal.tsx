@@ -117,20 +117,77 @@ export function BulkUploadStudioModal({
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Drag and drop state
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
+
+  // Prevent default browser drag/drop behavior on window so dropping files outside specific elements doesn't open in new tabs!
+  useEffect(() => {
+    if (!isOpen) return;
+    const preventWindowDrop = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", preventWindowDrop);
+    window.addEventListener("drop", preventWindowDrop);
+    return () => {
+      window.removeEventListener("dragover", preventWindowDrop);
+      window.removeEventListener("drop", preventWindowDrop);
+    };
+  }, [isOpen]);
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current += 1;
+    if (e.dataTransfer && e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+    if (!isDragging) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFilesSelected(e.dataTransfer.files);
+    }
+  };
+
   if (!isOpen) return null;
 
   // =========================================================================
   // 1. FILE IMPORT & EXIF SPOT CLUSTERING
   // =========================================================================
-  const handleFilesSelected = async (files: FileList | null) => {
+  const handleFilesSelected = async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
     setProcessingFiles(true);
 
+    const filesArray = Array.from(files);
     const newDrafts: PhotoItemDraft[] = [];
     const newUnmapped: string[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < filesArray.length; i++) {
+      const file = filesArray[i];
       const previewUrl = URL.createObjectURL(file);
       const photoId = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -529,8 +586,27 @@ export function BulkUploadStudioModal({
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         className="relative w-full max-w-7xl h-[94vh] rounded-3xl border border-slate-200 dark:border-olive-500/30 overflow-hidden flex flex-col shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
       >
+        {/* Full-Modal Drag & Drop Visual Overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 bg-olive-950/75 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-olive-400 rounded-3xl animate-fade-in p-6 text-center">
+            <div className="w-20 h-20 rounded-3xl bg-olive-600 text-white flex items-center justify-center shadow-2xl mb-4 animate-bounce">
+              <Upload className="w-10 h-10" />
+            </div>
+            <h3 className="text-2xl font-bold text-white shadow-sm">
+              Dă drumul fotografiilor aici!
+            </h3>
+            <p className="text-sm text-olive-200 mt-2 max-w-md">
+              Vom extrage automat coordonatele GPS și data fiecărei fotografii pentru a crea pin-urile pe hartă.
+            </p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-200 dark:border-olive-500/20 bg-slate-50 dark:bg-slate-900/90">
           <div className="flex items-center gap-3">
@@ -761,12 +837,40 @@ export function BulkUploadStudioModal({
               </h3>
 
               {spots.length === 0 ? (
-                <div className="py-12 border-2 border-dashed border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 rounded-3xl flex flex-col items-center justify-center text-center p-6 text-slate-700 dark:text-slate-300">
-                  <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                  <p className="text-sm font-bold">Nicio fotografie adăugată</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
-                    Trage sau selectează fotografii de pe cameră / telefon. Datele GPS le vor grupa automat pe hartă!
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  aria-label="Apasă sau trage fișiere pentru a încărca fotografii"
+                  className={`py-14 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-center p-6 transition-all duration-200 cursor-pointer group select-none ${
+                    isDragging
+                      ? "border-olive-500 bg-olive-100/60 dark:bg-olive-950/50 ring-4 ring-olive-500/20 scale-[1.01]"
+                      : "border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 hover:border-olive-500 hover:bg-olive-50/60 dark:hover:bg-olive-950/30 shadow-xs"
+                  }`}
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-olive-100 dark:bg-olive-900/50 text-olive-700 dark:text-olive-300 flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 group-hover:bg-olive-700 group-hover:text-white transition-all">
+                    <Upload className="w-7 h-7" />
+                  </div>
+                  <p className="text-base font-bold text-slate-800 dark:text-slate-100 group-hover:text-olive-700 dark:group-hover:text-olive-300 transition-colors">
+                    {isDragging ? "Dă drumul fotografiilor aici!" : "Nicio fotografie adăugată"}
                   </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm leading-relaxed">
+                    Trage sau <span className="text-olive-700 dark:text-olive-400 font-bold underline underline-offset-2">apasă aici pentru a selecta</span> fotografii de pe cameră / telefon. Datele GPS le vor grupa automat pe hartă!
+                  </p>
+                  <div className="mt-4 px-4 py-1.5 rounded-full bg-olive-700 hover:bg-olive-600 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5">
+                    <Plus className="w-4 h-4" />
+                    <span>Selectează Fotografii</span>
+                  </div>
                 </div>
               ) : (
                 spots.map((spot, sIdx) => {
@@ -872,6 +976,29 @@ export function BulkUploadStudioModal({
                     </div>
                   );
                 })
+              )}
+
+              {spots.length > 0 && (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  aria-label="Adaugă mai multe fotografii"
+                  className="p-4 border-2 border-dashed border-slate-300 dark:border-slate-800 hover:border-olive-500 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-olive-700 dark:hover:text-olive-300 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-olive-50/50 dark:hover:bg-olive-950/30 transition-all cursor-pointer group"
+                >
+                  <Plus className="w-4 h-4 text-olive-600 dark:text-olive-400 group-hover:scale-125 transition-transform" />
+                  <span>Trage mai multe poze aici sau apasă pentru a adăuga</span>
+                </div>
               )}
             </div>
           </div>
